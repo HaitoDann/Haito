@@ -9,93 +9,98 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css">
 <style>
-  body { display: flex; flex-direction: column; min-height: 100vh; }
-
-  /* Hero */
+  /* Hero — typographique, left-aligned */
   .hero {
-    padding: 100px 0 80px;
-    text-align: center;
+    padding: 88px 0 64px;
+    border-bottom: 1px solid var(--border);
   }
   .hero h1 {
     font-family: var(--font-display);
-    font-size: clamp(56px, 11vw, 96px);
+    font-size: clamp(72px, 14vw, 128px);
     font-weight: 800;
-    letter-spacing: -.03em;
-    line-height: 1;
+    letter-spacing: -.04em;
+    line-height: .9;
+    margin-bottom: 22px;
   }
   .hero-sub {
-    margin-top: 14px;
-    font-size: 14px;
-    color: var(--muted);
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-
-  /* Section label */
-  .section-label {
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: .1em;
+    letter-spacing: .14em;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 20px;
   }
 
-  /* Project grid — unified panel separated by 1px lines */
-  .proj-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--border);
-    gap: 1px;
-    margin-bottom: 80px;
+  /* Liste projets — pleine largeur */
+  .proj-list {
+    border-bottom: 1px solid var(--border);
   }
-  .proj-card {
+  .proj-row {
+    display: block;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: background .18s;
+  }
+  .proj-row:hover {
+    background: color-mix(in srgb, var(--tc, #fff) 6%, transparent);
+  }
+  .proj-row-in {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    background: var(--bg);
-    padding: 28px 24px;
-    transition: background .12s;
+    align-items: center;
+    gap: 28px;
+    padding: 28px 0;
   }
-  .proj-card:hover { background: var(--surface); }
 
+  /* Logo */
   .proj-logo {
-    width: 52px; height: 52px;
-    border-radius: 12px;
+    width: 72px; height: 72px;
+    border-radius: 16px;
     overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
     flex-shrink: 0;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    transition: transform .22s cubic-bezier(.16,1,.3,1);
   }
+  .proj-row:hover .proj-logo { transform: scale(1.05); }
   .proj-logo img { width: 100%; height: 100%; object-fit: contain; }
 
+  /* Info */
+  .proj-info { flex: 1; min-width: 0; }
   .proj-name {
     font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 21px; font-weight: 700;
+    letter-spacing: -.01em;
+    margin-bottom: 5px;
   }
   .proj-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.55;
-    flex: 1;
-  }
-  .proj-status {
-    font-size: 11px;
-    color: var(--dim);
-    margin-top: auto;
+    font-size: 13.5px; color: var(--muted); line-height: 1.4;
   }
 
-  @media (max-width: 640px) {
-    .proj-grid { grid-template-columns: 1fr; }
-    .hero { padding: 72px 0 60px; }
+  /* Meta */
+  .proj-meta {
+    text-align: right; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
   }
-  @media (min-width: 641px) and (max-width: 860px) {
-    .proj-grid { grid-template-columns: repeat(2, 1fr); }
+  .proj-status {
+    font-size: 11px; color: var(--dim);
+    letter-spacing: .04em;
+  }
+  .proj-arrow {
+    font-size: 17px; color: var(--muted);
+    transition: transform .15s, color .15s;
+  }
+  .proj-row:hover .proj-arrow {
+    transform: translateX(4px);
+    color: var(--text);
+  }
+
+  footer { border-top: 1px solid var(--border); padding: 28px 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 520px) {
+    .proj-logo { width: 52px; height: 52px; }
+    .proj-name { font-size: 17px; }
+    .proj-meta { display: none; }
   }
 </style>
 </head>
@@ -114,58 +119,73 @@
 </nav>
 
 <div class="wrap">
-
   <header class="hero">
     <h1>Haito</h1>
     <p class="hero-sub">Projets personnels</p>
   </header>
+</div>
 
-  <section>
-    <p class="section-label">Projets</p>
-    <div class="proj-grid">
+<div class="proj-list">
 
-      <a class="proj-card" href="nilo.html">
-        <div class="proj-logo"><img src="assets/logo-nilo.png" alt="Nilo"></div>
-        <div>
-          <div class="proj-name">Nilo</div>
-          <div class="proj-desc">Gestionnaire de projet local — entièrement hors ligne.</div>
-        </div>
-        <div class="proj-status">En développement</div>
-      </a>
-
-      <a class="proj-card" href="vinx.html">
-        <div class="proj-logo"><img src="assets/logo-vinx.png" alt="VinX Ledger"></div>
-        <div>
-          <div class="proj-name">VinX Ledger</div>
-          <div class="proj-desc">Blockchain L1 construite from scratch — protocole de consensus personnalisé.</div>
-        </div>
-        <div class="proj-status">En développement</div>
-      </a>
-
-      <a class="proj-card" href="plazma.html">
-        <div class="proj-logo"><img src="assets/logo-plazma.png" alt="PlaZma"></div>
-        <div>
-          <div class="proj-name">PlaZma</div>
-          <div class="proj-desc">Équipe esport compétitive sur League of Legends.</div>
-        </div>
-        <div class="proj-status">Actif</div>
-      </a>
-
-      <a class="proj-card" href="archi.html">
-        <div class="proj-logo"><img src="assets/logo-archi.png" alt="ARCHI"></div>
-        <div>
-          <div class="proj-name">ARCHI</div>
-          <div class="proj-desc">Plateforme de gestion d'équipe esport — planning, coaching, analytics.</div>
-        </div>
-        <div class="proj-status">Actif</div>
-      </a>
-
+  <a class="proj-row" href="nilo.html" style="--tc:#0ea5e9">
+    <div class="proj-row-in wrap">
+      <div class="proj-logo"><img src="assets/logo-nilo.png" alt="Nilo"></div>
+      <div class="proj-info">
+        <div class="proj-name">Nilo</div>
+        <div class="proj-desc">Gestionnaire de projet local — entièrement hors ligne.</div>
+      </div>
+      <div class="proj-meta">
+        <span class="proj-status">En développement</span>
+        <span class="proj-arrow">→</span>
+      </div>
     </div>
-  </section>
+  </a>
+
+  <a class="proj-row" href="vinx.html" style="--tc:#10b981">
+    <div class="proj-row-in wrap">
+      <div class="proj-logo"><img src="assets/logo-vinx.png" alt="VinX Ledger"></div>
+      <div class="proj-info">
+        <div class="proj-name">VinX Ledger</div>
+        <div class="proj-desc">Blockchain L1 construite from scratch — protocole de consensus personnalisé.</div>
+      </div>
+      <div class="proj-meta">
+        <span class="proj-status">En développement</span>
+        <span class="proj-arrow">→</span>
+      </div>
+    </div>
+  </a>
+
+  <a class="proj-row" href="plazma.html" style="--tc:#c026d3">
+    <div class="proj-row-in wrap">
+      <div class="proj-logo"><img src="assets/logo-plazma.png" alt="PlaZma"></div>
+      <div class="proj-info">
+        <div class="proj-name">PlaZma</div>
+        <div class="proj-desc">Équipe esport compétitive sur League of Legends.</div>
+      </div>
+      <div class="proj-meta">
+        <span class="proj-status">Actif</span>
+        <span class="proj-arrow">→</span>
+      </div>
+    </div>
+  </a>
+
+  <a class="proj-row" href="archi.html" style="--tc:#22d3ee">
+    <div class="proj-row-in wrap">
+      <div class="proj-logo"><img src="assets/logo-archi.png" alt="ARCHI"></div>
+      <div class="proj-info">
+        <div class="proj-name">ARCHI</div>
+        <div class="proj-desc">Plateforme de gestion d'équipe esport — planning, coaching, analytics.</div>
+      </div>
+      <div class="proj-meta">
+        <span class="proj-status">Actif</span>
+        <span class="proj-arrow">→</span>
+      </div>
+    </div>
+  </a>
 
 </div>
 
-<footer class="ht-footer">Haito</footer>
+<footer><span style="color:var(--muted);font-size:12px">Haito</span></footer>
 
 </body>
 </html>
