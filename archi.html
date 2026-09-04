@@ -6,213 +6,91 @@
 <title>ARCHI — Haito</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css">
 <style>
-  body{display:flex;flex-direction:column;align-items:center;padding-bottom:64px}
-  .pg{width:100%;max-width:var(--page-max);padding:0 var(--gut)}
-
-  @keyframes fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  @keyframes logo-in{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
-  @keyframes logo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-  @keyframes sep-grow{from{width:0;opacity:0}to{width:64px;opacity:1}}
-  @keyframes title-in{from{opacity:0;letter-spacing:.2em;filter:blur(4px)}to{opacity:1;letter-spacing:.04em;filter:none}}
-
-  .hero{text-align:center;padding:64px 0 40px}
-  .hero-ico{
-    width:96px;height:96px;border-radius:26px;margin:0 auto 22px;
-    background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.28);
-    display:flex;align-items:center;justify-content:center;font-size:46px;
-    animation:logo-in .55s cubic-bezier(.16,1,.3,1) both, logo-float 7s ease-in-out infinite .6s;
-  }
-  .hero-ico:hover{animation-play-state:paused,paused}
-  .hero h1{
-    font-size:clamp(38px,7vw,66px);letter-spacing:.04em;margin-bottom:10px;
-    animation:title-in .85s cubic-bezier(.16,1,.3,1) both .12s;
-  }
-  .hero-badge{animation:fade-up .5s cubic-bezier(.16,1,.3,1) both .4s;display:inline-block;margin-bottom:12px}
-  .hero-sep{
-    display:block;height:2px;
-    background:linear-gradient(90deg,transparent,#22d3ee,transparent);
-    margin:0 auto;border-radius:1px;
-    animation:sep-grow .75s cubic-bezier(.16,1,.3,1) both .45s;
-  }
-
-  .sec{
-    margin-top:44px;opacity:0;transform:translateY(20px);
-    transition:opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1);
-  }
-  .sec.visible{opacity:1;transform:none}
-  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
-  .sec-head h2{font-size:15px;font-weight:600;letter-spacing:.02em}
-  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
-
-  .content-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
-    padding:26px;border-left:3px solid #22d3ee;
-  }
-  .content-card p{color:var(--dim);line-height:1.7;font-size:14.5px}
-  .content-card p+p{margin-top:12px}
-
-  .module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-  .module{
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
-    padding:18px 20px;border-top:2px solid #22d3ee;
-    transition:transform .15s,border-color .15s,box-shadow .15s;
-  }
-  .module:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(34,211,238,.12);border-color:rgba(34,211,238,.35)}
-  .module-icon{font-size:20px;margin-bottom:8px}
-  .module-name{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:4px}
-  .module-desc{font-size:12px;color:var(--muted)}
-
-  .stack-row{display:flex;flex-wrap:wrap;gap:8px}
-  .stack-pill{
-    font-size:12px;font-weight:600;padding:5px 13px;border-radius:999px;
-    background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);color:#22d3ee;
-  }
-
-  .link-card{
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
-    padding:20px 24px;display:flex;align-items:center;justify-content:space-between;
-    transition:border-color .2s,background .2s;
-  }
-  .link-card:hover{background:var(--surface-2);border-color:rgba(34,211,238,.35)}
-  .link-card-label{font-family:var(--font-display);font-size:15px;font-weight:600}
-  .link-card-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
-  .link-arr{color:#22d3ee;font-size:18px}
-
-  footer{
-    margin-top:52px;padding-top:22px;border-top:1px solid var(--border);width:100%;
-    display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
-    color:var(--muted);font-size:12px;
-    opacity:0;animation:fade-up .5s cubic-bezier(.16,1,.3,1) forwards 1s;
-  }
-  footer a{color:var(--dim);transition:color .15s}
-  footer a:hover{color:#22d3ee}
-
-  @media(prefers-reduced-motion:reduce){
-    *{animation-duration:.001ms!important;transition-duration:.001ms!important}
-    .sec{opacity:1;transform:none}
-  }
+  .proj-hero { padding:72px 0 56px; }
+  .proj-logo { width:64px;height:64px;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:24px; }
+  .proj-logo img { width:100%;height:100%;object-fit:contain; }
+  .proj-name { font-family:var(--font-display);font-size:clamp(36px,7vw,60px);font-weight:800;letter-spacing:-.02em;line-height:1;margin-bottom:12px; }
+  .proj-tagline { font-size:15px;color:var(--dim); }
+  .proj-body { display:flex;flex-direction:column;gap:48px;padding-bottom:80px; }
+  .sec-label { font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px; }
+  .sec-text { font-size:15px;color:var(--dim);line-height:1.75; }
+  .sec-text p+p { margin-top:12px; }
+  .module-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--border); }
+  .module { background:var(--bg);padding:20px; }
+  .module-icon { font-size:18px;margin-bottom:8px; }
+  .module-name { font-weight:600;font-size:14px;margin-bottom:3px; }
+  .module-desc { font-size:12px;color:var(--muted); }
+  .stack-row { display:flex;flex-wrap:wrap;gap:8px; }
+  .stack-tag { font-size:12px;font-weight:500;padding:5px 12px;border-radius:6px;border:1px solid var(--border);color:var(--dim); }
+  .link-item { display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:18px 20px;transition:border-color .12s,background .12s; }
+  .link-item:hover { background:var(--surface);border-color:#333; }
+  .link-name { font-family:var(--font-display);font-size:15px;font-weight:600;margin-bottom:3px; }
+  .link-sub { font-size:12px;color:var(--muted); }
+  .link-arr { color:var(--dim);font-size:16px; }
 </style>
 </head>
 <body>
-
-<nav class="ht-topbar">
-  <div class="ht-topbar-inner">
-    <a class="ht-brand" href="index.html">
-      <span class="ht-brand-dot">H</span>
-      Haito
-    </a>
-    <nav class="ht-nav">
-      <a href="roman.html">Roman</a>
-      <a href="nilo.html">Nilo</a>
-      <a href="vinx.html">VinX Ledger</a>
-      <a href="plazma.html">PlaZma</a>
-      <a href="archi.html" class="active">ARCHI</a>
-    </nav>
+<nav class="ht-nav">
+  <div class="ht-nav-inner">
+    <a class="ht-brand" href="index.html">Haito</a>
+    <ul class="ht-nav-links">
+      <li><a href="roman.html">Roman</a></li>
+      <li><a href="nilo.html">Nilo</a></li>
+      <li><a href="vinx.html">VinX Ledger</a></li>
+      <li><a href="plazma.html">PlaZma</a></li>
+      <li><a href="archi.html" class="active">ARCHI</a></li>
+    </ul>
   </div>
 </nav>
-
-<div class="pg">
-
-  <header class="hero">
-    <div class="hero-ico"><img src="assets/logo-archi.png" alt="ARCHI" style="width:54px;height:54px;object-fit:contain;"></div>
-    <div class="hero-badge"><span class="badge status-active">Actif</span></div>
-    <h1>ARCHI</h1>
-    <span class="hero-sep"></span>
+<div class="wrap">
+  <header class="proj-hero">
+    <div class="proj-logo"><img src="assets/logo-archi.png" alt="ARCHI"></div>
+    <div class="proj-name">ARCHI</div>
+    <div class="proj-tagline">Plateforme de gestion d'équipe esport pour PlaZma.</div>
   </header>
-
-  <section class="sec">
-    <div class="sec-head"><h2>À propos</h2><span class="line"></span></div>
-    <div class="content-card">
-      <p>Plateforme web de gestion d'équipe esport, conçue pour PlaZma. Gestion du planning hebdomadaire, suivi des scrims, coaching personnalisé par joueur, satisfaction d'équipe et analytics de performance.</p>
-      <p>Construit en vanilla HTML/CSS/JS avec Firebase pour la persistance des données. Déployé sur GitHub Pages.</p>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sec-head"><h2>Modules</h2><span class="line"></span></div>
-    <div class="module-grid">
-      <div class="module">
-        <div class="module-icon">📅</div>
-        <div class="module-name">Planning</div>
-        <div class="module-desc">Programme d'entraînement hebdomadaire</div>
+  <div class="proj-body">
+    <section>
+      <p class="sec-label">À propos</p>
+      <div class="sec-text">
+        <p>Plateforme web de gestion d'équipe esport, conçue pour PlaZma. Gestion du planning hebdomadaire, suivi des scrims, coaching personnalisé par joueur, satisfaction d'équipe et analytics de performance.</p>
+        <p>Construit en vanilla HTML/CSS/JS avec Firebase pour la persistance des données. Déployé sur GitHub Pages.</p>
       </div>
-      <div class="module">
-        <div class="module-icon">⚔️</div>
-        <div class="module-name">Scrim</div>
-        <div class="module-desc">Compte-rendu de matchs entraînement</div>
+    </section>
+    <section>
+      <p class="sec-label">Modules</p>
+      <div class="module-grid">
+        <div class="module"><div class="module-icon">📅</div><div class="module-name">Planning</div><div class="module-desc">Programme d'entraînement hebdomadaire</div></div>
+        <div class="module"><div class="module-icon">⚔️</div><div class="module-name">Scrim</div><div class="module-desc">Compte-rendu de matchs entraînement</div></div>
+        <div class="module"><div class="module-icon">🔭</div><div class="module-name">Scouting</div><div class="module-desc">Analyse des équipes adverses</div></div>
+        <div class="module"><div class="module-icon">📋</div><div class="module-name">Draft</div><div class="module-desc">Fiches de draft et stratégies</div></div>
+        <div class="module"><div class="module-icon">📚</div><div class="module-name">Encyclopédie</div><div class="module-desc">Wiki interne ARCHI</div></div>
+        <div class="module"><div class="module-icon">💬</div><div class="module-name">Satisfaction</div><div class="module-desc">Suivi du bien-être de l'équipe</div></div>
+        <div class="module"><div class="module-icon">📊</div><div class="module-name">Dashboard</div><div class="module-desc">Analytics et indicateurs de performance</div></div>
+        <div class="module"><div class="module-icon">👥</div><div class="module-name">Équipe</div><div class="module-desc">Roster, staff et profils joueurs</div></div>
       </div>
-      <div class="module">
-        <div class="module-icon">🔭</div>
-        <div class="module-name">Scouting</div>
-        <div class="module-desc">Analyse des équipes adverses</div>
+    </section>
+    <section>
+      <p class="sec-label">Stack</p>
+      <div class="stack-row">
+        <span class="stack-tag">HTML · CSS · JS</span>
+        <span class="stack-tag">Firebase Firestore</span>
+        <span class="stack-tag">GitHub Pages</span>
+        <span class="stack-tag">Discord Webhooks</span>
+        <span class="stack-tag">Riot API</span>
       </div>
-      <div class="module">
-        <div class="module-icon">📋</div>
-        <div class="module-name">Draft</div>
-        <div class="module-desc">Fiches de draft et stratégies</div>
-      </div>
-      <div class="module">
-        <div class="module-icon">📚</div>
-        <div class="module-name">Encyclopédie</div>
-        <div class="module-desc">Wiki interne ARCHI</div>
-      </div>
-      <div class="module">
-        <div class="module-icon">💬</div>
-        <div class="module-name">Satisfaction</div>
-        <div class="module-desc">Suivi du bien-être de l'équipe</div>
-      </div>
-      <div class="module">
-        <div class="module-icon">📊</div>
-        <div class="module-name">Dashboard</div>
-        <div class="module-desc">Analytics et indicateurs de performance</div>
-      </div>
-      <div class="module">
-        <div class="module-icon">👥</div>
-        <div class="module-name">Équipe</div>
-        <div class="module-desc">Roster, staff et profils joueurs</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sec-head"><h2>Stack</h2><span class="line"></span></div>
-    <div class="stack-row">
-      <span class="stack-pill">HTML · CSS · JS</span>
-      <span class="stack-pill">Firebase Firestore</span>
-      <span class="stack-pill">GitHub Pages</span>
-      <span class="stack-pill">Discord Webhooks</span>
-      <span class="stack-pill">Riot API</span>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="sec-head"><h2>Accès</h2><span class="line"></span></div>
-    <a class="link-card" href="https://haitodann.github.io/PlaZma/" target="_blank" rel="noopener">
-      <div>
-        <div class="link-card-label">haitodann.github.io/PlaZma</div>
-        <div class="link-card-sub">Ouvrir ARCHI dans un nouvel onglet</div>
-      </div>
-      <span class="link-arr">↗</span>
-    </a>
-  </section>
-
-  <footer>
-    <a href="index.html">← Tous les projets</a>
-    <span style="color:var(--border-2)">·</span>
-    <span>Haito</span>
-  </footer>
-
+    </section>
+    <section>
+      <p class="sec-label">Accès</p>
+      <a class="link-item" href="https://haitodann.github.io/PlaZma/" target="_blank" rel="noopener">
+        <div><div class="link-name">haitodann.github.io/PlaZma</div><div class="link-sub">Ouvrir ARCHI dans un nouvel onglet</div></div>
+        <span class="link-arr">↗</span>
+      </a>
+    </section>
+  </div>
 </div>
-
-<script src="assets/haito.js"></script>
-<script>
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }});
-  }, {threshold:.08});
-  document.querySelectorAll('.sec').forEach(s => obs.observe(s));
-</script>
+<footer class="ht-footer"><a href="index.html">← Tous les projets</a></footer>
 </body>
 </html>
