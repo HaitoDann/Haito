@@ -28,7 +28,15 @@
     letter-spacing: .14em;
     text-transform: uppercase;
     color: var(--muted);
+    margin-bottom: 32px;
   }
+  .hero-bio {
+    font-size: 15px;
+    color: var(--dim);
+    line-height: 1.75;
+    max-width: 560px;
+  }
+  .hero-bio strong { color: var(--text); font-weight: 600; }
 
   /* Liste projets — pleine largeur */
   .proj-list {
@@ -121,9 +129,22 @@
 <div class="wrap">
   <header class="hero">
     <h1>Haito</h1>
-    <p class="hero-sub">Projets personnels</p>
+    <p class="hero-sub">Vincent ROMEO · VinX Labs</p>
+    <p class="hero-bio">
+      <strong id="age"></strong> ans — apprenti Master Cybersécurité, développeur et fondateur de <strong>VinX Labs</strong>.<br>
+      Dev, entrepreneur, gamer. Ces pages regroupent les projets que je construis.
+    </p>
   </header>
 </div>
+<script>
+  (function(){
+    var born = new Date(2001,10,28);
+    var now = new Date();
+    var age = now.getFullYear()-born.getFullYear();
+    if(now.getMonth()<born.getMonth()||(now.getMonth()===born.getMonth()&&now.getDate()<born.getDate()))age--;
+    document.getElementById('age').textContent=age;
+  })();
+</script>
 
 <div class="proj-list">
 
