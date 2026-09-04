@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  body{display:flex;flex-direction:column;align-items:center;padding-bottom:64px}
+  .home{width:100%;max-width:var(--page-max);padding:0 var(--gut)}
+
+  /* Barre de progression scroll */
+  #scroll-prog{
+    position:fixed;top:0;left:0;height:2px;z-index:9999;width:0%;
+    background:linear-gradient(90deg,var(--accent),#8b5cf6,var(--accent));
+    background-size:200% 100%;
+    animation:prog-shimmer 2s linear infinite;
+    transition:width .08s linear;pointer-events:none;
+  }
+  @keyframes prog-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
+  /* Hero */
+  .hero{text-align:center;padding:72px 0 44px}
+
+  @keyframes logo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes logo-in{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+  .hero-initial{
+    width:96px;height:96px;border-radius:26px;margin:0 auto 22px;
+    background:linear-gradient(135deg,rgba(34,211,238,.15),rgba(139,92,246,.12));
+    border:1px solid var(--accent-line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-size:48px;font-weight:800;color:var(--accent);
+    animation:logo-in .55s cubic-bezier(.16,1,.3,1) both, logo-float 7s ease-in-out infinite .6s;
+  }
+  .hero-initial:hover{animation-play-state:paused,paused}
+
+  @keyframes title-in{from{opacity:0;letter-spacing:.2em;filter:blur(4px)}to{opacity:1;letter-spacing:.04em;filter:none}}
+  .hero h1{
+    font-size:clamp(44px,9vw,76px);letter-spacing:.04em;margin-bottom:10px;
+    animation:title-in .85s cubic-bezier(.16,1,.3,1) both .12s;
+  }
+
+  @keyframes sep-grow{from{width:0;opacity:0}to{width:64px;opacity:1}}
+  @keyframes fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hero-sep{
+    display:block;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    margin:0 auto 0;border-radius:1px;
+    animation:sep-grow .75s cubic-bezier(.16,1,.3,1) both .45s;
+  }
+
+  /* Sections scroll-reveal */
+  .sec{
+    margin-top:44px;
+    opacity:0;transform:translateY(20px);
+    transition:opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1);
+  }
+  .sec.visible{opacity:1;transform:none}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
+  .sec-head h2{font-size:15px;font-weight:600;letter-spacing:.02em}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+  /* Grille projets */
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+
+  @keyframes proj-rise{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .proj-card{
+    display:flex;flex-direction:column;gap:8px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:24px;
+    transition:border-color .22s,transform .22s,background .22s,box-shadow .3s;
+    position:relative;overflow:hidden;opacity:0;cursor:pointer;
+  }
+  .proj-grid.revealed .proj-card{animation:proj-rise .48s cubic-bezier(.16,1,.3,1) both}
+  .proj-grid.revealed .proj-card:nth-child(1){animation-delay:.04s}
+  .proj-grid.revealed .proj-card:nth-child(2){animation-delay:.10s}
+  .proj-grid.revealed .proj-card:nth-child(3){animation-delay:.16s}
+  .proj-grid.revealed .proj-card:nth-child(4){animation-delay:.22s}
+  .proj-grid.revealed .proj-card:nth-child(5){animation-delay:.28s}
+
+  .proj-card::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--tc,var(--accent));opacity:.7;
+    transition:opacity .22s,width .22s;
+  }
+  .proj-card:hover::before{opacity:1;width:4px}
+  .proj-card:hover{
+    transform:translateY(-3px);
+    border-color:color-mix(in srgb,var(--tc,var(--accent)) 35%,var(--border));
+    background:var(--surface-2);
+    box-shadow:0 8px 30px color-mix(in srgb,var(--tc,var(--accent)) 16%,transparent);
+  }
+
+  .proj-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .proj-ico{
+    width:48px;height:48px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;font-size:26px;
+    background:color-mix(in srgb,var(--tc,var(--accent)) 12%,transparent);
+    border:1px solid color-mix(in srgb,var(--tc,var(--accent)) 24%,transparent);
+    flex-shrink:0;
+    transition:transform .2s cubic-bezier(.16,1,.3,1);
+  }
+  .proj-card:hover .proj-ico{transform:scale(1.08)}
+  .proj-name{font-family:var(--font-display);font-size:20px;font-weight:700}
+  .proj-desc{font-size:13px;color:var(--muted);line-height:1.5;flex:1}
+  .proj-cta{font-size:12px;font-weight:600;color:var(--muted);margin-top:6px;transition:color .2s}
+  .proj-card:hover .proj-cta{color:var(--tc,var(--accent))}
+
+  /* Ripple clic vide */
+  @keyframes water-rip{
+    0%  {transform:scale(0);opacity:var(--op,.6)}
+    15% {opacity:var(--op,.6)}
+    100%{transform:scale(1);opacity:0}
+  }
+  .wd-ring{
+    position:fixed;border-radius:50%;pointer-events:none;z-index:9997;
+    border:1px solid rgba(34,211,238,.6);transform:scale(0);
+  }
+
+  /* Footer */
+  footer{
+    margin-top:52px;padding-top:22px;border-top:1px solid var(--border);width:100%;
+    display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+    color:var(--muted);font-size:12px;
+    opacity:0;animation:fade-up .5s cubic-bezier(.16,1,.3,1) forwards 1s;
+  }
+  footer a{color:var(--dim);transition:color .15s}
+  footer a:hover{color:var(--accent)}
+
+  @media(max-width:520px){.proj-grid{grid-template-columns:1fr}}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+    .sec{opacity:1;transform:none}
+    .proj-card{opacity:1}
+    #scroll-prog{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="scroll-prog" aria-hidden="true"></div>
+
+<nav class="ht-topbar">
+  <div class="ht-topbar-inner">
+    <a class="ht-brand" href="index.html">
+      <span class="ht-brand-dot">H</span>
+      Haito
+    </a>
+    <nav class="ht-nav">
+      <a href="roman.html">Roman</a>
+      <a href="nilo.html">Nilo</a>
+      <a href="vinx.html">VinX Ledger</a>
+      <a href="plazma.html">PlaZma</a>
+      <a href="archi.html">ARCHI</a>
+    </nav>
+  </div>
+</nav>
+
+<div class="home">
+
+  <header class="hero">
+    <div class="hero-initial">H</div>
+    <h1>Haito</h1>
+    <span class="hero-sep"></span>
+  </header>
+
+  <section class="sec" id="sec-projects">
+    <div class="sec-head"><h2>Projets</h2><span class="line"></span></div>
+    <div class="proj-grid">
+
+      <a class="proj-card" href="roman.html" style="--tc:#a855f7">
+        <div class="proj-top">
+          <div class="proj-ico">📖</div>
+          <span class="badge status-wip">En cours</span>
+        </div>
+        <div class="proj-name">Roman</div>
+        <div class="proj-desc">Un roman de fantasy — écriture longue forme.</div>
+        <div class="proj-cta">Voir le projet →</div>
+      </a>
+
+      <a class="proj-card" href="nilo.html" style="--tc:#10b981">
+        <div class="proj-top">
+          <div class="proj-ico">🗂️</div>
+          <span class="badge status-dev">En développement</span>
+        </div>
+        <div class="proj-name">Nilo</div>
+        <div class="proj-desc">Gestionnaire de projet local — entièrement hors ligne.</div>
+        <div class="proj-cta">Voir le projet →</div>
+      </a>
+
+      <a class="proj-card" href="vinx.html" style="--tc:#f59e0b">
+        <div class="proj-top">
+          <div class="proj-ico">⬡</div>
+          <span class="badge status-dev">En développement</span>
+        </div>
+        <div class="proj-name">VinX Ledger</div>
+        <div class="proj-desc">Blockchain L1 construite from scratch — protocole de consensus personnalisé.</div>
+        <div class="proj-cta">Voir le projet →</div>
+      </a>
+
+      <a class="proj-card" href="plazma.html" style="--tc:#22d3ee">
+        <div class="proj-top">
+          <div class="proj-ico">⚡</div>
+          <span class="badge status-active">Actif</span>
+        </div>
+        <div class="proj-name">PlaZma</div>
+        <div class="proj-desc">Équipe esport compétitive sur League of Legends.</div>
+        <div class="proj-cta">Voir le projet →</div>
+      </a>
+
+      <a class="proj-card" href="archi.html" style="--tc:#3b82f6">
+        <div class="proj-top">
+          <div class="proj-ico">🏗️</div>
+          <span class="badge status-active">Actif</span>
+        </div>
+        <div class="proj-name">ARCHI</div>
+        <div class="proj-desc">Plateforme de gestion d'équipe esport — planning, coaching, analytics.</div>
+        <div class="proj-cta">Voir le projet →</div>
+      </a>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>Haito</span>
+    <span style="color:var(--border-2)">·</span>
+    <span>Projets personnels</span>
+  </footer>
+
+</div>
+
+<script src="assets/haito.js"></script>
+<script>
+  /* Scroll progress */
+  window.addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('scroll-prog').style.width =
+      (max > 0 ? Math.min(scrollY / max * 100, 100) : 0) + '%';
+  }, {passive:true});
+
+  /* Scroll-reveal */
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(!entry.isIntersecting) return;
+      const sec = entry.target;
+      sec.classList.add('visible');
+      sec.querySelectorAll('.proj-grid').forEach(g => g.classList.add('revealed'));
+      revealObs.unobserve(sec);
+    });
+  }, {threshold:.08});
+  document.querySelectorAll('.sec').forEach(s => revealObs.observe(s));
+
+  /* Water-drop ripple (clic vide uniquement) */
+  const SKIP = 'a,button,input,select,textarea,label,[onclick],[role=button],.btn';
+  const rings = [
+    {sz:60,  delay:0,   dur:750, op:.56},
+    {sz:110, delay:70,  dur:860, op:.32},
+    {sz:160, delay:145, dur:970, op:.17},
+  ];
+  document.addEventListener('click', e => {
+    if(e.target.closest(SKIP)) return;
+    rings.forEach(({sz, delay, dur, op}) => {
+      const ring = document.createElement('div');
+      ring.className = 'wd-ring';
+      ring.style.cssText =
+        `width:${sz}px;height:${sz}px;` +
+        `left:${e.clientX - sz/2}px;top:${e.clientY - sz/2}px;--op:${op};`;
+      document.body.appendChild(ring);
+      ring.getBoundingClientRect();
+      ring.style.animation = `water-rip ${dur}ms ${delay}ms cubic-bezier(0,.55,.45,1) both`;
+      setTimeout(() => ring.remove(), delay + dur + 50);
+    });
+  });
+</script>
+</body>
+</html>

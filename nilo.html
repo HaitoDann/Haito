@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nilo — Haito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  body{display:flex;flex-direction:column;align-items:center;padding-bottom:64px}
+  .pg{width:100%;max-width:var(--page-max);padding:0 var(--gut)}
+
+  @keyframes fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes logo-in{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+  @keyframes logo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes sep-grow{from{width:0;opacity:0}to{width:64px;opacity:1}}
+  @keyframes title-in{from{opacity:0;letter-spacing:.2em;filter:blur(4px)}to{opacity:1;letter-spacing:.04em;filter:none}}
+
+  .hero{text-align:center;padding:64px 0 40px}
+  .hero-ico{
+    width:96px;height:96px;border-radius:26px;margin:0 auto 22px;
+    background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.28);
+    display:flex;align-items:center;justify-content:center;font-size:46px;
+    animation:logo-in .55s cubic-bezier(.16,1,.3,1) both, logo-float 7s ease-in-out infinite .6s;
+  }
+  .hero-ico:hover{animation-play-state:paused,paused}
+  .hero h1{
+    font-size:clamp(38px,7vw,66px);letter-spacing:.04em;margin-bottom:10px;
+    animation:title-in .85s cubic-bezier(.16,1,.3,1) both .12s;
+  }
+  .hero-badge{animation:fade-up .5s cubic-bezier(.16,1,.3,1) both .4s;display:inline-block;margin-bottom:12px}
+  .hero-sep{
+    display:block;height:2px;
+    background:linear-gradient(90deg,transparent,#10b981,transparent);
+    margin:0 auto;border-radius:1px;
+    animation:sep-grow .75s cubic-bezier(.16,1,.3,1) both .45s;
+  }
+
+  .sec{
+    margin-top:44px;opacity:0;transform:translateY(20px);
+    transition:opacity .5s cubic-bezier(.16,1,.3,1),transform .5s cubic-bezier(.16,1,.3,1);
+  }
+  .sec.visible{opacity:1;transform:none}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+  .sec-head h2{font-size:15px;font-weight:600;letter-spacing:.02em}
+  .sec-head .line{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+  .content-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:26px;border-left:3px solid #10b981;
+  }
+  .content-card p{color:var(--dim);line-height:1.7;font-size:14.5px}
+  .content-card p+p{margin-top:12px}
+  .placeholder{color:var(--muted);font-style:italic;font-size:13.5px}
+
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .feat-item{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:18px 20px;display:flex;gap:12px;align-items:flex-start;
+  }
+  .feat-dot{width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;margin-top:6px}
+  .feat-name{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:3px}
+  .feat-desc{font-size:12.5px;color:var(--muted)}
+
+  .stack-row{display:flex;flex-wrap:wrap;gap:8px}
+  .stack-pill{
+    font-size:12px;font-weight:600;padding:5px 13px;border-radius:999px;
+    background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#10b981;
+  }
+
+  footer{
+    margin-top:52px;padding-top:22px;border-top:1px solid var(--border);width:100%;
+    display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+    color:var(--muted);font-size:12px;
+    opacity:0;animation:fade-up .5s cubic-bezier(.16,1,.3,1) forwards 1s;
+  }
+  footer a{color:var(--dim);transition:color .15s}
+  footer a:hover{color:#10b981}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+    .sec{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<nav class="ht-topbar">
+  <div class="ht-topbar-inner">
+    <a class="ht-brand" href="index.html">
+      <span class="ht-brand-dot">H</span>
+      Haito
+    </a>
+    <nav class="ht-nav">
+      <a href="roman.html">Roman</a>
+      <a href="nilo.html" class="active">Nilo</a>
+      <a href="vinx.html">VinX Ledger</a>
+      <a href="plazma.html">PlaZma</a>
+      <a href="archi.html">ARCHI</a>
+    </nav>
+  </div>
+</nav>
+
+<div class="pg">
+
+  <header class="hero">
+    <div class="hero-ico">🗂️</div>
+    <div class="hero-badge"><span class="badge status-dev">En développement</span></div>
+    <h1>Nilo</h1>
+    <span class="hero-sep"></span>
+  </header>
+
+  <section class="sec">
+    <div class="sec-head"><h2>À propos</h2><span class="line"></span></div>
+    <div class="content-card">
+      <p class="placeholder">Ajoute ici la description de Nilo — son fonctionnement, son objectif, ce qui le différencie d'autres outils.</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Fonctionnalités</h2><span class="line"></span></div>
+    <div class="feat-grid">
+      <div class="feat-item">
+        <div class="feat-dot"></div>
+        <div>
+          <div class="feat-name">À compléter</div>
+          <div class="feat-desc">Description de la fonctionnalité</div>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-dot"></div>
+        <div>
+          <div class="feat-name">À compléter</div>
+          <div class="feat-desc">Description de la fonctionnalité</div>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-dot"></div>
+        <div>
+          <div class="feat-name">À compléter</div>
+          <div class="feat-desc">Description de la fonctionnalité</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Stack</h2><span class="line"></span></div>
+    <div class="stack-row">
+      <span class="stack-pill">À compléter</span>
+    </div>
+  </section>
+
+  <footer>
+    <a href="index.html">← Tous les projets</a>
+    <span style="color:var(--border-2)">·</span>
+    <span>Haito</span>
+  </footer>
+
+</div>
+
+<script src="assets/haito.js"></script>
+<script>
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }});
+  }, {threshold:.08});
+  document.querySelectorAll('.sec').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
