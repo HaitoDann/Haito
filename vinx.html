@@ -56,19 +56,28 @@
   <div class="proj-body">
     <section class="sec">
       <p class="sec-label">À propos</p>
-      <div class="sec-text"><p class="placeholder">Ajoute ici la description de VinX Ledger — objectif, protocole de consensus, ce qui rend cette L1 unique.</p></div>
+      <div class="sec-text">
+        <p>VinX Ledger est une blockchain L1 ZK-native construite from scratch en Rust. Settlement layer minimaliste : pas d'EVM, pas de WASM — uniquement arithmétique de soldes, vérification de preuves ZK et consensus BFT.</p>
+        <p>Supply fixe de 100 milliards de VINX, fair launch, aucun pré-mine.</p>
+      </div>
     </section>
     <section class="sec">
       <p class="sec-label">Architecture</p>
       <div class="layer-list">
-        <div class="layer"><div class="layer-num">L1</div><div><div class="layer-name">Consensus</div><div class="layer-desc">À compléter — protocole de consensus utilisé</div></div></div>
-        <div class="layer"><div class="layer-num">L2</div><div><div class="layer-name">Ledger</div><div class="layer-desc">À compléter — structure du registre, validation des blocs</div></div></div>
-        <div class="layer"><div class="layer-num">L3</div><div><div class="layer-name">Réseau</div><div class="layer-desc">À compléter — architecture réseau peer-to-peer</div></div></div>
+        <div class="layer"><div class="layer-num">L1</div><div><div class="layer-name">Consensus</div><div class="layer-desc">PoS Algorand-style — comité de 100 validateurs sélectionnés par VRF, signatures BLS12-381 agrégées, finalité déterministe en 1 bloc</div></div></div>
+        <div class="layer"><div class="layer-num">L2</div><div><div class="layer-name">Ledger</div><div class="layer-desc">Settlement minimaliste — arithmétique de soldes + vérification de preuves ZK (SP1), sans EVM ni WASM</div></div></div>
+        <div class="layer"><div class="layer-num">L3</div><div><div class="layer-name">Réseau</div><div class="layer-desc">Appchains ZK permissionless — chaque appchain soumet ses preuves SP1 au settlement layer</div></div></div>
       </div>
     </section>
     <section class="sec">
       <p class="sec-label">Stack</p>
-      <div class="stack-row"><span class="stack-tag">À compléter</span></div>
+      <div class="stack-row">
+        <span class="stack-tag">Rust</span>
+        <span class="stack-tag">SP1 (ZK Proofs)</span>
+        <span class="stack-tag">BLS12-381</span>
+        <span class="stack-tag">VRF</span>
+        <span class="stack-tag">Docker</span>
+      </div>
     </section>
   </div>
   <footer><a href="index.html">← Tous les projets</a></footer>
