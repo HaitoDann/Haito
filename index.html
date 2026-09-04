@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Haito</title>
+<title>Haito — Vincent ROMEO</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230d0d0d'/><text x='16' y='23' font-size='18' font-family='system-ui' font-weight='800' fill='%23f0f0f0' text-anchor='middle'>H</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Haito">
+<meta property="og:title" content="Haito — Vincent ROMEO">
+<meta property="og:description" content="Dev, entrepreneur, gamer. Projets personnels : Nilo, VinX Ledger, PlaZma, ARCHI.">
+<meta name="description" content="Dev, entrepreneur, gamer. Projets personnels : Nilo, VinX Ledger, PlaZma, ARCHI.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -103,6 +109,15 @@
     color: var(--text);
   }
 
+  .now-sec { padding: 40px 0; border-bottom: 1px solid var(--border); }
+  .now-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .now-list { display: flex; flex-direction: column; }
+  .now-item { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .now-item:last-child { border-bottom: none; }
+  .now-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); flex-shrink: 0; }
+  .now-text { font-size: 14px; color: var(--dim); }
+  .now-text strong { color: var(--text); font-weight: 600; }
+
   footer { border-top: 1px solid var(--border); padding: 28px 0; text-align: center; font-size: 12px; color: var(--muted); }
 
   @media (max-width: 520px) {
@@ -145,6 +160,17 @@
     document.getElementById('age').textContent=age;
   })();
 </script>
+
+<div class="wrap">
+  <section class="now-sec">
+    <p class="now-label">En ce moment</p>
+    <div class="now-list">
+      <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>Master Cybersécurité</strong> — apprentissage en alternance</div></div>
+      <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>VinX Ledger</strong> — développement de la blockchain L1</div></div>
+      <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>PlaZma</strong> — saison OUAT Division 5</div></div>
+    </div>
+  </section>
+</div>
 
 <div class="proj-list">
 

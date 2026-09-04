@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PlaZma — Haito</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230d0d0d'/><text x='16' y='23' font-size='18' font-family='system-ui' font-weight='800' fill='%23f0f0f0' text-anchor='middle'>H</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Haito">
+<meta property="og:title" content="PlaZma — Haito">
+<meta property="og:description" content="Équipe esport sur League of Legends. Association depuis 2022, division 5 OUAT. Objectif : LFL Division 2.">
+<meta name="description" content="Équipe esport sur League of Legends. Association depuis 2022, division 5 OUAT. Objectif : LFL Division 2.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -22,7 +28,8 @@
   .placeholder { color:var(--muted);font-style:italic;font-size:14px; }
   .roster { display:flex;gap:1px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--border); }
   .role { flex:1;background:var(--bg);padding:20px 12px;text-align:center; }
-  .role-icon { font-size:20px;margin-bottom:8px; }
+  .role-icon { width:28px;height:28px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center; }
+  .role-icon img { width:100%;height:100%;object-fit:contain; }
   .role-name { font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px; }
   .role-player { font-family:var(--font-display);font-size:14px;font-weight:600; }
   .link-item { display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:18px 20px;transition:border-color .12s,background .12s; }
@@ -66,11 +73,11 @@
     <section class="sec">
       <p class="sec-label">Roster</p>
       <div class="roster">
-        <div class="role"><div class="role-icon">🛡️</div><div class="role-name">Top</div><div class="role-player">Boulou</div></div>
-        <div class="role"><div class="role-icon">🌿</div><div class="role-name">Jungle</div><div class="role-player">Naiko</div></div>
-        <div class="role"><div class="role-icon">⚔️</div><div class="role-name">Mid</div><div class="role-player">Lakraël</div></div>
-        <div class="role"><div class="role-icon">🏹</div><div class="role-name">ADC</div><div class="role-player">Keido</div></div>
-        <div class="role"><div class="role-icon">💫</div><div class="role-name">Support</div><div class="role-player">Joody</div></div>
+        <div class="role"><div class="role-icon"><img src="assets/top.png" alt="Top"></div><div class="role-name">Top</div><div class="role-player">Boulou</div></div>
+        <div class="role"><div class="role-icon"><img src="assets/jgl.png" alt="Jungle"></div><div class="role-name">Jungle</div><div class="role-player">Naiko</div></div>
+        <div class="role"><div class="role-icon"><img src="assets/mid.png" alt="Mid"></div><div class="role-name">Mid</div><div class="role-player">Lakraël</div></div>
+        <div class="role"><div class="role-icon"><img src="assets/bot.png" alt="ADC"></div><div class="role-name">ADC</div><div class="role-player">Keido</div></div>
+        <div class="role"><div class="role-icon"><img src="assets/sup.png" alt="Support"></div><div class="role-name">Support</div><div class="role-player">Joody</div></div>
       </div>
     </section>
     <section class="sec">
@@ -82,10 +89,16 @@
     </section>
     <section class="sec">
       <p class="sec-label">Liens</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+      <a class="link-item" href="https://github.com/HaitoDann/PlaZma" target="_blank" rel="noopener">
+        <div><div class="link-name">GitHub</div><div class="link-sub">Code source du projet PlaZma</div></div>
+        <span class="link-arr">↗</span>
+      </a>
       <a class="link-item" href="archi.html">
         <div><div class="link-name">ARCHI</div><div class="link-sub">Plateforme de gestion de l'équipe</div></div>
         <span class="link-arr">→</span>
       </a>
+      </div>
     </section>
   </div>
   <footer><a href="index.html">← Tous les projets</a></footer>
