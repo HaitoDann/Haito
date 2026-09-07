@@ -3,19 +3,24 @@
 @view-transition { navigation: auto; }
 
 ::view-transition-old(root) {
-  animation: 380ms cubic-bezier(.4,0,1,1) both vt-out;
+  animation: 520ms cubic-bezier(.4,0,.6,1) both vt-out;
 }
 ::view-transition-new(root) {
-  animation: 700ms cubic-bezier(.16,1,.3,1) both vt-in;
+  animation: 1100ms cubic-bezier(.16,1,.3,1) both vt-in;
 }
-@keyframes vt-out { to { opacity: 0; transform: translateY(-14px) scale(.99); } }
-@keyframes vt-in  { from { opacity: 0; transform: translateY(32px); } }
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-22px) scale(.98); filter: blur(4px); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(48px); filter: blur(6px); }
+  40%  { filter: blur(0); }
+}
 
 ::view-transition-group(proj-logo-nilo),
 ::view-transition-group(proj-logo-vinx),
 ::view-transition-group(proj-logo-plazma),
 ::view-transition-group(proj-logo-archi) {
-  animation-duration: 580ms;
+  animation-duration: 850ms;
   animation-timing-function: cubic-bezier(.16,1,.3,1);
 }
 
