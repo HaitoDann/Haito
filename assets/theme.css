@@ -55,7 +55,15 @@ html[data-theme="light"] {
   --dim: #444;
 }
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+  cursor: url('cursor.png') 4 4, auto;
+}
+
+a, button, [role="button"],
+.proj-row, .link-item, .tl-item, .theme-toggle, .err-link {
+  cursor: url('cursor-pointer.png') 40 4, pointer;
+}
 
 body {
   font-family: var(--font);
@@ -83,7 +91,6 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: 7px;
   width: 30px; height: 30px;
-  cursor: pointer;
   color: var(--dim);
   font-size: 13px;
   display: flex; align-items: center; justify-content: center;
