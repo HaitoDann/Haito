@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livre Blanc VinX Ledger — Haito</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230d0d0d'/><text x='16' y='23' font-size='18' font-family='system-ui' font-weight='800' fill='%23f0f0f0' text-anchor='middle'>H</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Haito">
+<meta property="og:title" content="Livre Blanc VinX Ledger v6.0">
+<meta property="og:description" content="Rail de paiement L1 minimaliste — non-EVM, Rust, BLS12-381, fair launch. Document de référence v6.0, septembre 2026.">
+<meta name="description" content="Rail de paiement L1 minimaliste — non-EVM, Rust, BLS12-381, fair launch. Document de référence v6.0, septembre 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  :root { --tc: #10b981; }
+
+  .wp-hero { padding: 72px 0 48px; border-bottom: 1px solid var(--border); }
+  .wp-badge { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--tc); margin-bottom: 16px; }
+  .wp-title { font-family: var(--font-display); font-size: clamp(28px, 5vw, 48px); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
+  .wp-meta { font-size: 13px; color: var(--muted); display: flex; gap: 24px; flex-wrap: wrap; }
+  .wp-meta span::before { content: '·'; margin-right: 8px; }
+  .wp-meta span:first-child::before { content: ''; margin: 0; }
+
+  .wp-toc { padding: 32px 0; border-bottom: 1px solid var(--border); }
+  .wp-toc-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .wp-toc-list { display: flex; flex-direction: column; gap: 0; }
+  .wp-toc-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--dim); transition: color .12s; }
+  .wp-toc-item:last-child { border-bottom: none; }
+  .wp-toc-item:hover { color: var(--text); }
+  .wp-toc-num { font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--tc); min-width: 20px; }
+
+  .wp-body { display: flex; flex-direction: column; padding-bottom: 80px; }
+  .wp-sec { border-bottom: 1px solid var(--border); padding: 48px 0; }
+  .wp-sec:last-child { border-bottom: none; }
+
+  .wp-h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 24px; display: flex; align-items: baseline; gap: 12px; }
+  .wp-h2-num { font-size: 13px; color: var(--tc); font-weight: 600; }
+  .wp-h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 28px 0 12px; }
+
+  .wp-p { font-size: 15px; color: var(--dim); line-height: 1.8; margin-bottom: 14px; }
+  .wp-p:last-child { margin-bottom: 0; }
+  .wp-p strong { color: var(--text); font-weight: 600; }
+
+  .wp-blockquote { border-left: 3px solid var(--tc); padding: 12px 0 12px 20px; margin: 20px 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .wp-blockquote strong { color: var(--dim); }
+
+  .wp-code { font-family: 'SFMono-Regular', 'Consolas', monospace; font-size: 12.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; overflow-x: auto; color: var(--dim); line-height: 1.7; margin: 16px 0; white-space: pre; }
+
+  .wp-table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  td { font-size: 13px; color: var(--dim); border-bottom: 1px solid var(--border); padding: 11px 14px; vertical-align: top; line-height: 1.5; }
+  td strong { color: var(--text); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+
+  .wp-rules { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .wp-rule { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--dim); line-height: 1.6; }
+  .wp-rule:last-child { border-bottom: none; }
+  .wp-rule-n { font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--tc); min-width: 18px; padding-top: 2px; }
+  .wp-rule strong { color: var(--text); }
+
+  .wp-roadmap { display: flex; flex-direction: column; gap: 24px; }
+  .wp-rm-group { }
+  .wp-rm-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+  .wp-rm-items { display: flex; flex-direction: column; gap: 8px; }
+  .wp-rm-item { display: flex; gap: 12px; font-size: 14px; color: var(--dim); }
+  .wp-rm-item strong { color: var(--text); }
+
+  footer { padding: 28px 0; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); }
+  footer a { color: var(--dim); transition: color .12s; }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 520px) { .wp-meta { gap: 12px; } }
+</style>
+</head>
+<body>
+<nav class="ht-nav">
+  <div class="ht-nav-inner">
+    <a class="ht-brand" href="index.html">Haito</a>
+    <ul class="ht-nav-links">
+      <li><a href="nilo.html">Nilo</a></li>
+      <li><a href="vinx.html" class="active">VinX Ledger</a></li>
+      <li><a href="plazma.html">PlaZma</a></li>
+      <li><a href="archi.html">ARCHI</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="wp-hero">
+    <p class="wp-badge">VinX Labs — Livre Blanc</p>
+    <h1 class="wp-title">VinX Ledger</h1>
+    <div class="wp-meta">
+      <span>Version 6.0</span>
+      <span>Septembre 2026</span>
+      <span>VinX Labs</span>
+    </div>
+  </header>
+
+  <nav class="wp-toc">
+    <p class="wp-toc-label">Sommaire</p>
+    <div class="wp-toc-list">
+      <a class="wp-toc-item" href="#s1"><span class="wp-toc-num">01</span>Vision & Philosophie</a>
+      <a class="wp-toc-item" href="#s2"><span class="wp-toc-num">02</span>Architecture Technique</a>
+      <a class="wp-toc-item" href="#s3"><span class="wp-toc-num">03</span>Tokenomics</a>
+      <a class="wp-toc-item" href="#s4"><span class="wp-toc-num">04</span>Frais</a>
+      <a class="wp-toc-item" href="#s5"><span class="wp-toc-num">05</span>Staking</a>
+      <a class="wp-toc-item" href="#s6"><span class="wp-toc-num">06</span>Infrastructure</a>
+      <a class="wp-toc-item" href="#s7"><span class="wp-toc-num">07</span>Le temps dans VinX</a>
+      <a class="wp-toc-item" href="#s8"><span class="wp-toc-num">08</span>Gouvernance & Évolution</a>
+      <a class="wp-toc-item" href="#s9"><span class="wp-toc-num">09</span>Règles Immuables</a>
+      <a class="wp-toc-item" href="#s10"><span class="wp-toc-num">10</span>Positionnement</a>
+      <a class="wp-toc-item" href="#s11"><span class="wp-toc-num">11</span>Roadmap</a>
+      <a class="wp-toc-item" href="#annexe"><span class="wp-toc-num">—</span>Synthèse</a>
+    </div>
+  </nav>
+
+  <div class="wp-body">
+
+    <section class="wp-sec" id="s1">
+      <h2 class="wp-h2"><span class="wp-h2-num">01</span>Vision & Philosophie</h2>
+      <p class="wp-p">VinX Ledger est un <strong>rail de paiement L1 minimaliste</strong> : envoyer des VinX rapidement, de façon fiable et vérifiable. Point.</p>
+      <p class="wp-p">Ce n'est pas une plateforme de contrats intelligents. Ce n'est pas un L1 généraliste. Il n'y a pas de machine virtuelle, pas de modules applicatifs, pas de surcouches — et c'est un choix délibéré, pas un manque.</p>
+      <p class="wp-p">La valeur de VinX repose sur une promesse simple : un <strong>cash numérique honnête, rapide et souverain</strong>, dont chaque règle peut être lue, comprise et vérifiée par n'importe qui. Un protocole qui fait une chose et la fait bien, plutôt qu'un écosystème qui fait beaucoup et qu'on ne peut pas auditer complètement.</p>
+      <p class="wp-p">Construit en solo, sans investisseurs, <strong>sans pre-mine</strong>, sans promesses spéculatives, VinX avance à son rythme.</p>
+      <div class="wp-blockquote"><strong>Ce qui change en v6.0 :</strong> VinX abandonne l'écosystème de subnets / modules / Appchains ZK prévu dans les versions précédentes. L'architecture se recentre entièrement sur le rail de paiement. La cryptographie de hachage passe de SHA-256 à BLAKE3 avant le genesis (ADR 0069).</div>
+    </section>
+
+    <section class="wp-sec" id="s2">
+      <h2 class="wp-h2"><span class="wp-h2-num">02</span>Architecture Technique</h2>
+      <div class="wp-table-wrap"><table>
+        <tr><th>Propriété</th><th>Valeur</th></tr>
+        <tr><td>Langage</td><td>Rust — implémentation propriétaire de bout en bout, aucun framework blockchain tiers</td></tr>
+        <tr><td>Cadence de bloc</td><td>Fixe à <strong>6 s</strong> — un bloc produit toutes les 6 secondes, même vide</td></tr>
+        <tr><td>Finalité</td><td>Déterministe <strong>au quorum</strong> via BLS agrégé</td></tr>
+        <tr><td>Capacité</td><td>Jusqu'à <strong>3 000 transactions par bloc</strong> · mempool de 100 000 tx · ~500 TPS</td></tr>
+        <tr><td>Précision</td><td>18 décimales internes, 2 affichées</td></tr>
+        <tr><td>Adresses</td><td>Format Bech32 avec préfixe <code>vinx1</code></td></tr>
+        <tr><td>Cryptographie</td><td>Ed25519 (signatures), BLS12-381 (co-signatures agrégées), BLAKE3 (hachage), Bech32 (adresses)</td></tr>
+        <tr><td>Référence de temps</td><td>Timestamp des blocs (temps réel), pas la hauteur</td></tr>
+      </table></div>
+
+      <h3 class="wp-h3">Pourquoi une implémentation custom sans VM</h3>
+      <p class="wp-p">VinX Ledger est implémenté sans framework blockchain tiers et sans machine virtuelle. Ce choix garantit :</p>
+      <p class="wp-p"><strong>Auditabilité maximale</strong> — surface de code réduite, aucune dépendance opaque, chaque règle est écrite explicitement. <strong>Sécurité prévisible</strong> — sans VM, la surface d'attaque est fixe et bornée ; aucun contrat malveillant ne peut s'exécuter dans le nœud. <strong>Maîtrise totale du protocole</strong> — rien n'est hérité par défaut d'un framework. <strong>Stabilité à long terme</strong> — aucune dépendance upstream susceptible de casser l'API.</p>
+
+      <h3 class="wp-h3">Types de transactions</h3>
+      <p class="wp-p">VinX reconnaît exactement cinq types de transactions — ni plus, ni moins :</p>
+      <div class="wp-table-wrap"><table>
+        <tr><th>Type</th><th>Usage</th></tr>
+        <tr><td><code>Transfer</code></td><td>Paiement natif VinX — le cas d'usage central</td></tr>
+        <tr><td><code>Bond</code></td><td>Déposer le bond pour devenir validateur</td></tr>
+        <tr><td><code>Unbond</code></td><td>Retirer le bond (déliaison différée 3 jours)</td></tr>
+        <tr><td><code>ValidatorJoin / ValidatorExit</code></td><td>Rejoindre ou quitter le set de validateurs</td></tr>
+        <tr><td><code>FeeAdjust</code></td><td>Gouvernance des frais de base</td></tr>
+      </table></div>
+      <p class="wp-p">C'est tout. Un nœud VinX n'exécute jamais de code tiers.</p>
+    </section>
+
+    <section class="wp-sec" id="s3">
+      <h2 class="wp-h2"><span class="wp-h2-num">03</span>Tokenomics</h2>
+      <p class="wp-p">La supply totale est fixée à <strong>100 000 000 000 VinX</strong> (100 milliards), immuable.</p>
+
+      <h3 class="wp-h3">Aucun pre-mine, aucune réserve pré-allouée</h3>
+      <div class="wp-code">Tokens émis   = 0 VinX   (0 %)
+Circulation   = 0 VinX   (0 %)</div>
+      <p class="wp-p">Rien n'existe au démarrage. Les VinX n'existent que lorsqu'ils sont mintés par le travail du consensus. Le fondateur lui-même obtient ses premiers tokens en faisant tourner des validateurs — pas autrement.</p>
+
+      <h3 class="wp-h3">Émission : décroissance exponentielle continue, demi-vie ~20 ans</h3>
+      <div class="wp-code">R(t) = R₀ · e^(−λt)     avec  λ = ln(2) / T_half
+                             T_half ≈ 20 ans
+                             R₀ ≈ 3,47 milliards VinX / an</div>
+      <p class="wp-p">L'intégrale sur l'infini vaut exactement 100 milliards. Il n'y a <strong>aucun événement discret</strong> (pas de halving-day) — la courbe décroît en permanence. L'émission est calculée sur les <strong>timestamps réels des blocs</strong> : un réseau au repos ne minte rien.</p>
+      <div class="wp-table-wrap"><table>
+        <tr><th>Échéance</th><th>Cumul émis</th><th>Restant</th></tr>
+        <tr><td>Genèse</td><td>0</td><td>100 Md</td></tr>
+        <tr><td>20 ans</td><td>50 Md</td><td>50 Md</td></tr>
+        <tr><td>40 ans</td><td>75 Md</td><td>25 Md</td></tr>
+        <tr><td>66 ans</td><td>90 Md</td><td>10 Md</td></tr>
+        <tr><td>∞</td><td>→ 100 Md</td><td>→ poussière</td></tr>
+      </table></div>
+
+      <h3 class="wp-h3">Distribution de l'émission</h3>
+      <p class="wp-p">L'émission accumulée sur une époque est distribuée entre proposeurs et co-signataires. Les <strong>proposeurs</strong> reçoivent une fraction fixe proportionnelle à leurs blocs dans l'époque. Le reste est réparti proportionnellement aux <strong>co-signatures valides</strong>. Le montant du bond ne multiplie pas les gains : seul le travail effectif compte.</p>
+
+      <h3 class="wp-h3">Relais automatique vers les frais</h3>
+      <p class="wp-p">Deux flux de revenus : l'<strong>émission</strong> (dominante au début, décroissante) et les <strong>frais</strong> (croissants avec l'usage). Quand l'émission atteint la poussière, les frais deviennent la source dominante et le réseau bascule en <strong>fees-only</strong> — automatiquement, sans intervention.</p>
+
+      <h3 class="wp-h3">Invariant de supply</h3>
+      <div class="wp-code">circulation + pot_époque + poussière_détruite = émis_total ≤ 100 000 000 000 VinX</div>
+      <p class="wp-p">L'invariant est vérifié à l'exécution (arithmétique checked, échec du bloc en cas de rupture).</p>
+    </section>
+
+    <section class="wp-sec" id="s4">
+      <h2 class="wp-h2"><span class="wp-h2-num">04</span>Frais</h2>
+      <h3 class="wp-h3">Frais forfaitaires</h3>
+      <div class="wp-code">frais = FRAIS_BASE × poids(type) × multiplicateur_congestion</div>
+      <p class="wp-p"><strong>FRAIS_BASE = 0,0001 VinX</strong> (gouvernable) — envoyer 1 VinX ou 1 million coûte la même chose. C'est le comportement attendu d'un vrai cash. Le multiplicateur de congestion monte linéairement de ×1 (jusqu'à 80 % du mempool) à ×3 (saturation). Les bond/unbond et actions de gouvernance sont exemptés de frais.</p>
+
+      <h3 class="wp-h3">Frais au producteur</h3>
+      <p class="wp-p">L'intégralité des frais est créditée immédiatement au validateur qui produit le bloc. Ni les frais ni l'émission ne quittent jamais la circulation — ils changent simplement de main.</p>
+      <div class="wp-code">[Émission — par époque]          ──► proposeurs + co-signataires
+[Frais forfaitaires — immédiats] ──► validateur producteur</div>
+    </section>
+
+    <section class="wp-sec" id="s5">
+      <h2 class="wp-h2"><span class="wp-h2-num">05</span>Staking</h2>
+      <p class="wp-p">Le staking dans VinX a une seule fonction : <strong>poser une caution</strong>. Ce n'est pas un mécanisme de rendement pour les détenteurs passifs.</p>
+      <p class="wp-p"><strong>Pas de staking retail.</strong> Un utilisateur lambda garde du VinX pour l'utiliser comme cash. <strong>Bond minimum : 100 000 VinX</strong> (gouvernable). <strong>Le bond ne rapporte aucun rendement</strong> — c'est une garantie de sécurité. <strong>Déliaison différée : 3 jours réels.</strong></p>
+
+      <h3 class="wp-h3">Slashing</h3>
+      <p class="wp-p"><strong>Équivocation (double-signature)</strong> : sanction 100 % du bond, exclusion du set. 10 % → prime au rapporteur. 90 % → redistribués aux validateurs honnêtes. Aucun token détruit — le slash est une redistribution.</p>
+      <p class="wp-p"><strong>Downtime</strong> : exclusion du set actif à la prochaine rotation d'époque, sans slash économique — l'absence n'est pas prouvablement malveillante.</p>
+    </section>
+
+    <section class="wp-sec" id="s6">
+      <h2 class="wp-h2"><span class="wp-h2-num">06</span>Infrastructure</h2>
+      <h3 class="wp-h3">Validateurs (PoA avec comité VRF)</h3>
+      <p class="wp-p">Nœuds qui produisent et co-signent les blocs. Mécanisme actuel (testnet) : PoA — un comité de validateurs autorisés co-signent les blocs via <strong>BLS12-381 agrégé</strong>. Le leader est sélectionné par <strong>ECVRF RFC 9381</strong>. Le bloc est finalisé lorsque <strong>≥ 67 % du comité</strong> l'ont co-signé. La finalité est BFT déterministe : un bloc quorum-signé ne peut jamais être réorganisé.</p>
+      <p class="wp-p">N'importe qui peut rejoindre le pool en postant le bond requis. Warmup de 3 époques avant d'être éligible. La rémunération est par le travail uniquement — émission d'époque + frais immédiats. Le réseau reste opérationnel tant que 67 % du comité sont en ligne.</p>
+
+      <h3 class="wp-h3">Full Nodes Communautaires</h3>
+      <p class="wp-p">N'importe qui peut faire tourner un nœud complet sans permission et sans rémunération directe. Les full nodes garantissent la souveraineté financière, un point d'accès RPC privé et l'auditabilité indépendante. Si VinX Labs disparaissait, ils conservent l'intégralité de la blockchain.</p>
+      <p class="wp-p">Synchronisation : snapshot sync (gap > 500 blocs), parallel sync (8 fetches concurrents), puis sync séquentielle pour la queue finale.</p>
+    </section>
+
+    <section class="wp-sec" id="s7">
+      <h2 class="wp-h2"><span class="wp-h2-num">07</span>Le temps dans VinX</h2>
+      <p class="wp-p">Toutes les garanties qui s'expriment en temps réel reposent sur le <strong>timestamp des en-têtes de blocs</strong>, jamais sur la hauteur : l'émission décroît selon le temps réel écoulé, la déliaison de bond mûrit après 3 jours réels, les préavis d'upgrade visent des jours réels.</p>
+      <p class="wp-p">Pour empêcher un producteur malhonnête de gonfler le temps, chaque bloc est validé contre des bornes de timestamp : monotonie non-décroissante et plafond (horloge locale + tolérance).</p>
+    </section>
+
+    <section class="wp-sec" id="s8">
+      <h2 class="wp-h2"><span class="wp-h2-num">08</span>Gouvernance & Évolution</h2>
+      <p class="wp-p">La gouvernance est assurée par une <strong>clé admin unique</strong> (le fondateur), rotatable à chaud via <code>AdminAction::RotateAdmin</code> sans redémarrage. Ses prérogatives : gérer le set de validateurs, ajuster les paramètres gouvernables (frais de base, bond minimum), planifier les mises à jour. Il n'y a <strong>pas de gel de compte</strong> : la propriété des tokens est inconditionnelle.</p>
+      <h3 class="wp-h3">Mises à jour du protocole</h3>
+      <div class="wp-table-wrap"><table>
+        <tr><th>Type</th><th>Préavis</th></tr>
+        <tr><td><strong>Patch</strong> — correctif</td><td>7 jours réels</td></tr>
+        <tr><td><strong>Minor</strong> — nouvelle fonctionnalité</td><td>30 jours réels</td></tr>
+        <tr><td><strong>Major</strong> — changement structurel</td><td>90 jours réels</td></tr>
+      </table></div>
+    </section>
+
+    <section class="wp-sec" id="s9">
+      <h2 class="wp-h2"><span class="wp-h2-num">09</span>Règles Immuables</h2>
+      <p class="wp-p">Les piliers de conception de VinX, que nulle gouvernance ne peut modifier :</p>
+      <div class="wp-rules">
+        <div class="wp-rule"><span class="wp-rule-n">1</span><span><strong>Cap de 100 milliards</strong> de VinX — jamais augmenté.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">2</span><span><strong>Quasi-absence de burn</strong> — le slash redistribue aux validateurs honnêtes, ne détruit pas. Seule la poussière des comptes reaped est détruite (≤ 0,001 VinX par compte).</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">3</span><span><strong>Aucun pre-mine, aucune réserve pré-allouée</strong> — à la genèse, émis = 0. 100 % de la supply mintée par le travail.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">4</span><span><strong>Invariant</strong> : <code>circulation + pot_époque + poussière_détruite = émis ≤ 100 Md</code> à chaque bloc.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">5</span><span><strong>Émission décroissante continue puis relais aux frais</strong> — jamais un robinet discrétionnaire, jamais un événement discret.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">6</span><span><strong>Le bond sécurise, le travail rémunère</strong> — le stake ne produit aucun rendement ; le slash punit et récompense collectivement les honnêtes.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">7</span><span><strong>Finalité BFT déterministe</strong> — comité VRF, BLS agrégé, ≥ 67 % pour finaliser. Un bloc finalisé ne peut pas être réorganisé.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">8</span><span><strong>Propriété inconditionnelle</strong> — aucun compte ne peut être gelé.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">9</span><span><strong>Aucune logique applicative dans le nœud</strong> — VinX est un rail de paiement. Il n'exécute jamais de code tiers. Pas de VM, pas de modules, pas de smart contracts.</span></div>
+        <div class="wp-rule"><span class="wp-rule-n">10</span><span><strong>Courbe d'émission immuable après la genèse</strong> — le total (100 Md), la demi-vie (~20 ans) et la forme exponentielle continue ne sont gouvernables par personne.</span></div>
+      </div>
+    </section>
+
+    <section class="wp-sec" id="s10">
+      <h2 class="wp-h2"><span class="wp-h2-num">10</span>Positionnement</h2>
+      <p class="wp-p">VinX Ledger est un <strong>projet artisanal</strong> : une monnaie souveraine, construite en solo, sans investisseurs ni pré-vente.</p>
+      <div class="wp-table-wrap"><table>
+        <tr><th></th><th></th></tr>
+        <tr><td><strong>Ce que VinX est</strong></td><td>Un rail de paiement L1 — envoyer de la valeur vite, sûrement, de façon vérifiable. Un protocole minimaliste — auditable par une seule personne attentive. Un cash numérique — forfait de frais, précision au centime, finalité immédiate.</td></tr>
+        <tr><td><strong>Ce que VinX n'est pas</strong></td><td>Une plateforme de DeFi ou de smart contracts. Un concurrent d'Ethereum ou de Solana. Un système de rendement passif.</td></tr>
+      </table></div>
+      <p class="wp-p">L'avantage de ce positionnement : VinX n'entre pas en compétition directe avec les L1 généralistes. Il résout un problème précis — le paiement — mieux qu'eux, parce qu'il ne fait que ça.</p>
+    </section>
+
+    <section class="wp-sec" id="s11">
+      <h2 class="wp-h2"><span class="wp-h2-num">11</span>Roadmap</h2>
+      <div class="wp-roadmap">
+        <div class="wp-rm-group">
+          <p class="wp-rm-label">Fait</p>
+          <div class="wp-rm-items">
+            <div class="wp-rm-item"><span>—</span><span>Protocole core complet : consensus PoA + BLS, ECVRF RFC 9381, compact blocks, snapshot sync + parallel sync, storage persistant, RPC REST</span></div>
+            <div class="wp-rm-item"><span>—</span><span>Modèle fair launch implémenté : émission par le travail, bond validateur, slashing prouvable, frais au producteur</span></div>
+            <div class="wp-rm-item"><span>—</span><span>Consensus multi-validateur éprouvé (banc n=3 : finalité au quorum, tolérance à 1 panne, sûreté à 1/3)</span></div>
+            <div class="wp-rm-item"><span>—</span><span>Infrastructure testnet : Dockerfile, docker-compose, genesis-testnet.json</span></div>
+          </div>
+        </div>
+        <div class="wp-rm-group">
+          <p class="wp-rm-label">Prochaines étapes</p>
+          <div class="wp-rm-items">
+            <div class="wp-rm-item"><span>1</span><span><strong>BLAKE3</strong> avant genesis (ADR 0069) — changement de protocole, breaking</span></div>
+            <div class="wp-rm-item"><span>2</span><span><strong>Genesis testnet</strong> — fixer les adresses réelles, timestamp coordonné, lancer le nœud public</span></div>
+            <div class="wp-rm-item"><span>3</span><span><strong>HTTPS</strong> sur le RPC public (nginx + Let's Encrypt)</span></div>
+            <div class="wp-rm-item"><span>4</span><span><strong>3+ validateurs indépendants</strong> — procédure documentée, vérification du genesis hash</span></div>
+          </div>
+        </div>
+        <div class="wp-rm-group">
+          <p class="wp-rm-label">Backlog</p>
+          <div class="wp-rm-items">
+            <div class="wp-rm-item"><span>—</span><span>Monitoring : Prometheus + Grafana sur <code>/metrics</code></span></div>
+            <div class="wp-rm-item"><span>—</span><span>Faucet public</span></div>
+            <div class="wp-rm-item"><span>—</span><span>Wallet web minimaliste (balance, send, historique)</span></div>
+            <div class="wp-rm-item"><span>—</span><span>Optimisations validées : mimalloc, hash mémoïsé, sig cache, batch verify</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="wp-p" style="margin-top:28px">VinX Ledger n'a pas de pression d'agenda. Le projet avance à son rythme.</p>
+    </section>
+
+    <section class="wp-sec" id="annexe">
+      <h2 class="wp-h2"><span class="wp-h2-num">—</span>Synthèse</h2>
+      <div class="wp-table-wrap"><table>
+        <tr><th>Catégorie</th><th>Valeur</th></tr>
+        <tr><td><strong>Type</strong></td><td>Rail de paiement L1 — non-EVM, account-based, sans VM</td></tr>
+        <tr><td><strong>Stack</strong></td><td>Rust, implémentation propriétaire</td></tr>
+        <tr><td><strong>Cryptographie</strong></td><td>Ed25519 (signatures), BLS12-381 (co-signatures), BLAKE3 (hachage), Bech32 <code>vinx1</code></td></tr>
+        <tr><td><strong>Cadence de bloc</strong></td><td>Fixe 6 s — un bloc toutes les 6 s, même vide</td></tr>
+        <tr><td><strong>Référence de temps</strong></td><td>Timestamp des blocs (temps réel), pas la hauteur</td></tr>
+        <tr><td><strong>Capacité</strong></td><td>3 000 tx/bloc · ~500 TPS · mempool 100 000</td></tr>
+        <tr><td><strong>Consensus</strong></td><td>PoA + comité ECVRF, BLS12-381 agrégé, finalité BFT déterministe (≥ 67 %)</td></tr>
+        <tr><td><strong>Types de tx</strong></td><td>Transfer, Bond, Unbond, ValidatorJoin, ValidatorExit, FeeAdjust — c'est tout</td></tr>
+        <tr><td><strong>Supply totale</strong></td><td>100 milliards VinX — immuable, no burn</td></tr>
+        <tr><td><strong>Genèse</strong></td><td>0 émis, 0 en circulation — aucun pre-mine</td></tr>
+        <tr><td><strong>Émission</strong></td><td>Minting progressif · décroissance expo. continue · demi-vie ~20 ans · temps réel</td></tr>
+        <tr><td><strong>Frais</strong></td><td>Forfait 0,0001 VinX × poids × congestion (×1–3) · 100 % au producteur</td></tr>
+        <tr><td><strong>Staking</strong></td><td>Bond validateur (min 100k VinX) · déliaison 3 j · slash équivocation 100 % redistribué · aucun rendement passif</td></tr>
+        <tr><td><strong>Gouvernance</strong></td><td>Clé admin rotatable · pas de gel de compte · upgrades planifiés 7/30/90 j réels</td></tr>
+        <tr><td><strong>Hors scope</strong></td><td>Smart contracts, VM, modules, Appchains, ZK, DeFi</td></tr>
+      </table></div>
+      <p class="wp-p" style="margin-top:24px;font-size:13px;color:var(--muted)">VinX Labs, septembre 2026 — Document de référence v6.0</p>
+    </section>
+
+  </div>
+  <footer><a href="vinx.html">← VinX Ledger</a></footer>
+</div>
+</body>
+</html>

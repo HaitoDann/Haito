@@ -118,6 +118,21 @@
   .now-text { font-size: 14px; color: var(--dim); }
   .now-text strong { color: var(--text); font-weight: 600; }
 
+  /* Timeline */
+  .tl-sec { padding: 60px 0; border-bottom: 1px solid var(--border); }
+  .tl-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 40px; }
+  .tl { position: relative; padding-left: 32px; }
+  .tl::before { content:''; position:absolute; left:6px; top:0; bottom:0; width:1px; background:var(--border); }
+  .tl-item { position: relative; margin-bottom: 36px; opacity:0; transform:translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+  .tl-item.visible { opacity:1; transform:translateY(0); }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position:absolute; left:-29px; top:4px; width:13px; height:13px; border-radius:50%; background:var(--border); border:2px solid var(--bg); flex-shrink:0; transition: background .3s; }
+  .tl-item.visible .tl-dot { background: var(--tl-color, var(--dim)); }
+  .tl-year { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); margin-bottom: 4px; }
+  .tl-event { font-size: 14px; color: var(--dim); line-height: 1.5; }
+  .tl-event strong { font-weight: 600; color: var(--text); }
+  .tl-event em { font-style: normal; color: var(--muted); font-size: 12px; }
+
   footer { border-top: 1px solid var(--border); padding: 28px 0; text-align: center; font-size: 12px; color: var(--muted); }
 
   @media (max-width: 520px) {
@@ -168,6 +183,64 @@
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>Master Cybersécurité</strong> — apprentissage en alternance</div></div>
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>VinX Ledger</strong> — développement de la blockchain L1</div></div>
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>PlaZma</strong> — saison OUAT Division 5</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="tl-sec">
+    <p class="tl-label">Parcours</p>
+    <div class="tl">
+      <div class="tl-item" style="--tl-color:#c026d3">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2018</div>
+        <div class="tl-event"><strong>Création de PlaZma</strong> — équipe esport née entre amis au lycée</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2019</div>
+        <div class="tl-event"><strong>Baccalauréat</strong></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2020</div>
+        <div class="tl-event"><strong>L1 MPC</strong> — <em>abandonné</em></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2021</div>
+        <div class="tl-event"><strong>Aide-soignant</strong></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">Jan 2022</div>
+        <div class="tl-event"><strong>TAI</strong> — Technicien Assistant Informatique</div>
+      </div>
+      <div class="tl-item" style="--tl-color:#c026d3">
+        <div class="tl-dot"></div>
+        <div class="tl-year">Nov 2022</div>
+        <div class="tl-event"><strong>PlaZma</strong> — association officielle</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">Sep 2022</div>
+        <div class="tl-event"><strong>GMSI au CESI</strong> — Gestionnaire de Systèmes d'Information</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2024</div>
+        <div class="tl-event"><strong>ASR au CESI</strong> — Administrateur Systèmes et Réseaux</div>
+      </div>
+      <div class="tl-item" style="--tl-color:#0ea5e9">
+        <div class="tl-dot"></div>
+        <div class="tl-year">2025</div>
+        <div class="tl-event"><strong>MICSI au CESI</strong> — Master Cybersécurité <em>(2025–2027)</em></div>
+      </div>
+      <div class="tl-item" style="--tl-color:#10b981">
+        <div class="tl-dot"></div>
+        <div class="tl-year">Sep 2026</div>
+        <div class="tl-event"><strong>Création de VinX Labs</strong></div>
+      </div>
     </div>
   </section>
 </div>
@@ -233,6 +306,15 @@
 </div>
 
 <footer><span style="color:var(--muted);font-size:12px">Haito</span></footer>
+<script>
+  (function(){
+    var items = document.querySelectorAll('.tl-item');
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('visible'); });
+    },{threshold:0.2});
+    items.forEach(function(el){ io.observe(el); });
+  })();
+</script>
 
 </body>
 </html>
