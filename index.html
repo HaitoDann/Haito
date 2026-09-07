@@ -115,9 +115,24 @@
   .now-list { display: flex; flex-direction: column; }
   .now-item { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--border); }
   .now-item:last-child { border-bottom: none; }
-  .now-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); flex-shrink: 0; }
+  @keyframes pulse-live {
+    0%   { box-shadow: 0 0 0 0   rgba(34,197,94,.55); }
+    60%  { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0   rgba(34,197,94,0); }
+  }
+  .now-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; animation: pulse-live 2.2s ease-out infinite; }
   .now-text { font-size: 14px; color: var(--dim); }
   .now-text strong { color: var(--text); font-weight: 600; }
+
+  /* Skills */
+  .skills-sec { padding: 40px 0; border-bottom: 1px solid var(--border); }
+  .skills-label { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 24px; }
+  .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .skill-cat-name { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-tag { font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border); color: var(--dim); transition: border-color .15s, color .15s; }
+  .skill-tag:hover { border-color: var(--text); color: var(--text); }
+  @media (max-width: 520px) { .skills-grid { grid-template-columns: 1fr; gap: 18px; } }
 
   /* Timeline horizontale */
   .tl-sec { padding: 60px 0; border-bottom: 1px solid var(--border); }
@@ -156,7 +171,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 130px;
+    width: 168px;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
@@ -276,6 +291,46 @@
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>Master Cybersécurité</strong> — apprentissage en alternance</div></div>
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>VinX Ledger</strong> — développement de la blockchain L1</div></div>
       <div class="now-item"><span class="now-dot"></span><div class="now-text"><strong>PlaZma</strong> — saison OUAT Division 5</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="skills-sec">
+    <p class="skills-label">Compétences</p>
+    <div class="skills-grid">
+      <div>
+        <div class="skill-cat-name">Conception</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Direction de produit</span>
+          <span class="skill-tag">Architecture système</span>
+          <span class="skill-tag">Tokenomics</span>
+        </div>
+      </div>
+      <div>
+        <div class="skill-cat-name">IA & Outils</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Prompt engineering</span>
+          <span class="skill-tag">Orchestration LLM</span>
+          <span class="skill-tag">Claude Code</span>
+        </div>
+      </div>
+      <div>
+        <div class="skill-cat-name">Organisation</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Gestion de projet</span>
+          <span class="skill-tag">Management d'équipe</span>
+          <span class="skill-tag">Roadmap & backlog</span>
+        </div>
+      </div>
+      <div>
+        <div class="skill-cat-name">Domaines</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Cybersécurité</span>
+          <span class="skill-tag">Blockchain & Web3</span>
+          <span class="skill-tag">Esport</span>
+        </div>
+      </div>
     </div>
   </section>
 </div>
