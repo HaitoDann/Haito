@@ -93,8 +93,9 @@
 
 <script src="assets/haito.js"></script>
 <script>
-// ── Sheet ID ──────────────────────────────────────────────────────────────────
-const SHEET_ID = '15-JS3dla66BugDswbxu7yPFfD6ho2XfdjKYPyN9ZcM8';
+// ── URL du sheet publié ───────────────────────────────────────────────────────
+// Fichier → Partager → Publier sur le web → CSV → remplace ods par csv dans l'URL
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4SekTzISvavuM7C_R1uAejYVlUz3xy2_X0ssVp9xQ_UsiYG5WbjATDIlKRU52cYE_rTw4asJpa2Yn/pub?output=csv';
 // Colonnes du sheet (ligne 1 = en-têtes) :
 // A:Compte B:Classe C:Nom D:Symbole E:Quantité F:PrixMoyen
 // G:PrixActuel(GOOGLEFINANCE — peut échouer → fallback sur F)
@@ -346,7 +347,7 @@ async function loadPortfolio() {
   const root = document.getElementById('pf-root');
   root.innerHTML = '<div class="pf-loading">Chargement du portefeuille…</div>';
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+    const url = SHEET_URL;
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const csv = await res.text();
