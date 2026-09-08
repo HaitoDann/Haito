@@ -72,6 +72,7 @@
   .price-live { color: var(--text); }
   .price-na   { color: var(--muted); font-style: italic; }
   .apy-cell   { font-size: 11px; line-height: 1.7; }
+  .stk-tokens { font-size: 10px; color: #f59e0b; margin-top: 2px; text-align: right; white-space: nowrap; }
 
   /* ── Footer ── */
   .pf-footer  { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 48px; font-size: 11px; color: var(--muted); }
@@ -248,9 +249,11 @@ const MANUAL = [
   {
     compte: 'DEFAULT', type: 'crypto',
     nom: 'Tao (Bittensor)', ticker: 'TAO', cgId: 'bittensor',
-    qty:      0,     // ← à renseigner
-    avgPrice: 0,     // ← prix moyen en EUR
+    qty:       26,          // total tokens (achetés + staking)
+    qtyBought: 18.890403,   // tokens achetés avec 4000€
+    avgPrice:  153.8462,    // coût effectif = 4000€ / 26 tokens
     apyDiv: 0, apyStk: 0,
+    notes: 'dont 7.11 TAO acquis par staking · investi 4000€',
     manual: true,
   },
 ];
@@ -316,6 +319,7 @@ function parseCSV(text) {
       apyDiv: toNum(c[11])||0,
       apyStk: toNum(c[13])||0,
       notes:        (c[15]||'').trim(),
+      qtyBought:    toNum(c[16]) >= 0 && !isNaN(toNum(c[16])) ? toNum(c[16]) : qty,
       manual: false,
     };
   }).filter(Boolean);
@@ -479,23 +483,33 @@ function buildTable(subset) {
     </tr></thead>
     <tbody>
     ${subset.map(p=>{
-      const px=p.currentPrice??p.avgPrice;
-      const inv=p.avgPrice*p.qty, val=px*p.qty;
-      const pnl=val-inv, pnlPct=inv>0?(pnl/inv)*100:0;
-      const apyT=p.apyDiv+p.apyStk;
-      const pxCell=p.currentPrice!=null
-        ?`<span class="price-live">${fmtEur(p.currentPrice)}</span>`
-        :`<span class="price-na" title="Fallback prix moyen">${fmtEur(p.avgPrice)} ≈</span>`;
-      const apyParts=[];
-      if(p.apyDiv>0) apyParts.push(`<span class="c-pos">${(p.apyDiv*100).toFixed(2)}% div</span>`);
-      if(p.apyStk>0) apyParts.push(`<span style="color:#f59e0b">${(p.apyStk*100).toFixed(2)}% stk</span>`);
+      const px  = p.currentPrice ?? p.avgPrice;
+      const inv = p.avgPrice * p.qty;   // = argent réellement investi (avg effectif × qty totale)
+      const val = px * p.qty;
+      const pnl = val - inv;
+      const pnlPct = inv > 0 ? (pnl/inv)*100 : (val > 0 ? 100 : 0);
+      const apyT = p.apyDiv + p.apyStk;
+
+      // Tokens acquis en staking
+      const qtyStk = (p.qtyBought !== undefined && p.qtyBought < p.qty - 0.0001)
+        ? p.qty - p.qtyBought : 0;
+      const qtyCell = qtyStk > 0
+        ? `${fmtNum(p.qty)}<div class="stk-tokens">⚡ ${fmtNum(qtyStk, 3)} staking</div>`
+        : fmtNum(p.qty);
+
+      const pxCell = p.currentPrice != null
+        ? `<span class="price-live">${fmtEur(p.currentPrice)}</span>`
+        : `<span class="price-na" title="Fallback prix moyen">${fmtEur(p.avgPrice)} ≈</span>`;
+      const apyParts = [];
+      if (p.apyDiv > 0) apyParts.push(`<span class="c-pos">${(p.apyDiv*100).toFixed(2)}% div</span>`);
+      if (p.apyStk > 0) apyParts.push(`<span style="color:#f59e0b">${(p.apyStk*100).toFixed(2)}% stk</span>`);
       return `<tr>
         <td>
           <div class="asset-name">${p.nom}${p.manual?'<span class="manual-badge">MANUEL</span>':''}</div>
           <div class="asset-ticker">${p.ticker}${p.notes?`<span style="color:var(--muted);font-weight:400;margin-left:6px">${p.notes}</span>`:''}</div>
         </td>
-        <td>${fmtNum(p.qty)}</td>
-        <td>${fmtEur(p.avgPrice)}</td>
+        <td>${qtyCell}</td>
+        <td>${fmtEur(p.avgPrice)}<div style="font-size:10px;color:var(--muted);margin-top:2px">sur coût effectif</div></td>
         <td>${pxCell}</td>
         <td>${fmtEur(val)}</td>
         <td><span class="${pnlClass(pnl)}">${sign(pnl)}${fmtEur(pnl)}</span></td>
