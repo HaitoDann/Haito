@@ -248,10 +248,21 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCkmxrVuAEyRgY
 // Positions manuelles (hors Google Sheet) — prix récupéré via CoinGecko
 const MANUAL = [];
 
-// Plus-values déjà réalisées et réinvesties (argent sorti du portefeuille puis remis).
+// Plus-values déjà réalisées et réinvesties (calculé depuis relevé TR 07/2024–09/2026).
 // → Soustrait du "cash engagé" réel, ajouté au P&L total.
-// Exemple : j'ai vendu avec +1 500 € de PV et réinvesti cet argent → REALIZED_GAINS = 1500
-const REALIZED_GAINS = 0;
+const REALIZED_GAINS = 2560;
+
+// Tokens reçus gratuitement via staking (confirmés ou estimés via APY × durée).
+// Valeur déjà incluse dans le P&L (avg effectif = investi_total / qty_totale).
+// Affiché en note pour montrer la contribution du staking.
+const STAKING_TOKENS = {
+  TAO:   7.1096,  // confirmé : 26.0 total − 18.8904 achetés (relevé TR)
+  MATIC: 2.0000,  // confirmé : 100% staking
+  ETH:   0.08,    // estimé : 2.5% APY × ~1.2 ans × ~2.66 ETH
+  SOL:   7.50,    // estimé : 5% APY × ~1.5 ans × ~95 SOL
+  DOT:   0.43,    // estimé : 1.97% APY × ~1.25 ans × ~17 DOT
+  ADA:   0,       // acquisition récente (août 2026), staking négligeable
+};
 
 // ════════════════════════════════════════════════════════════════
 
@@ -427,21 +438,23 @@ function buildCharts(positions) {
 
 // ── Stats ───────────────────────────────────────────────────────
 function buildStats(positions) {
-  let investi=0, valeur=0, revDiv=0, revStk=0;
+  let investi=0, valeur=0, revDiv=0, revStk=0, stakingVal=0;
   positions.forEach(p=>{
     const px=p.currentPrice??p.avgPrice;
     investi+=p.avgPrice*p.qty;
     valeur+=px*p.qty;
-    revDiv+=p.avgPrice*p.qty*p.apyDiv;  // dividende sur coût (APY fixe/coût)
-    revStk+=px*p.qty*p.apyStk;          // staking sur valeur actuelle (rendement variable)
+    revDiv+=p.avgPrice*p.qty*p.apyDiv;
+    revStk+=px*p.qty*p.apyStk;
+    const stkQty = STAKING_TOKENS[p.ticker] || 0;
+    stakingVal += stkQty * px;
   });
-  // Cash réellement sorti de ta poche = coût de revient − PV déjà réalisées et réinvesties
   const cashIn = investi - REALIZED_GAINS;
   const unrealized = valeur - investi;
   const totalPnl = unrealized + REALIZED_GAINS;
   const totalPnlPct = cashIn > 0 ? (totalPnl/cashIn)*100 : 0;
   const nbFallback = positions.filter(p=>p.priceFallback).length;
   const hasPV = REALIZED_GAINS > 0;
+  const hasStk = stakingVal > 0;
 
   return `<div class="pf-stats">
     <div class="stat">
@@ -455,9 +468,9 @@ function buildStats(positions) {
       <div class="stat-sub">${nbFallback>0?`<span style="color:#f59e0b">${nbFallback} prix en attente</span>`:'tous au cours live'}</div>
     </div>
     <div class="stat">
-      <div class="stat-label">P&amp;L${hasPV?' total':''}</div>
+      <div class="stat-label">P&amp;L total</div>
       <div class="stat-value ${pnlClass(totalPnl)}">${sign(totalPnl)}${fmtEur(totalPnl,0)}</div>
-      <div class="stat-sub ${pnlClass(totalPnlPct)}">${sign(totalPnlPct)}${totalPnlPct.toFixed(2)} %${hasPV?`<br><span style="font-size:10px;opacity:.7">dont ${fmtEur(REALIZED_GAINS,0)} PV réalisées</span>`:''}</div>
+      <div class="stat-sub ${pnlClass(totalPnlPct)}">${sign(totalPnlPct)}${totalPnlPct.toFixed(2)} %${hasPV?`<br><span style="font-size:10px;opacity:.7">dont ${fmtEur(REALIZED_GAINS,0)} PV réalisées</span>`:''}${hasStk?`<br><span style="font-size:10px;color:#f59e0b">⚡ ~${fmtEur(stakingVal,0)} tokens staking</span>`:''}</div>
     </div>
     <div class="stat">
       <div class="stat-label">Revenus annuels</div>
@@ -641,6 +654,12 @@ async function loadPortfolio() {
     const csv = await res.text();
     const sheetPositions = parseCSV(csv);
     if (!sheetPositions.length) throw new Error('Aucune position trouvée.');
+
+    // Appliquer les overrides staking (corrige qtyBought pour les tickers connus)
+    sheetPositions.forEach(p => {
+      const stkQty = STAKING_TOKENS[p.ticker];
+      if (stkQty !== undefined && stkQty > 0) p.qtyBought = Math.max(0, p.qty - stkQty);
+    });
 
     // Fusionner positions manuelles (avec fetch prix CoinGecko)
     const manualActive = MANUAL.filter(p => p.qty > 0);
