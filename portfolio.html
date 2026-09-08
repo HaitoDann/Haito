@@ -244,19 +244,8 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT4SekTzISvav
 // Laisser vide si pas encore configuré — le bouton "+" sera désactivé
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCkmxrVuAEyRgYVQYN488bejLAQ_dME2zDspdkdxERSLylZI1Bewv4BXoiW9FZ9OpP/exec';
 
-// Positions manuelles (hors Trade Republic) — prix récupéré via CoinGecko
-const MANUAL = [
-  {
-    compte: 'DEFAULT', type: 'crypto',
-    nom: 'Tao (Bittensor)', ticker: 'TAO', cgId: 'bittensor',
-    qty:       26,          // total tokens (achetés + staking)
-    qtyBought: 18.890403,   // tokens achetés avec 4000€
-    avgPrice:  153.8462,    // coût effectif = 4000€ / 26 tokens
-    apyDiv: 0, apyStk: 0,
-    notes: 'dont 7.11 TAO acquis par staking · investi 4000€',
-    manual: true,
-  },
-];
+// Positions manuelles (hors Google Sheet) — prix récupéré via CoinGecko
+const MANUAL = [];
 
 // ════════════════════════════════════════════════════════════════
 
