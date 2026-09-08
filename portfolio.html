@@ -21,6 +21,7 @@
 
   /* ── Stats ── */
   .pf-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 28px 0; border-bottom: 1px solid var(--border); }
+  @media (max-width: 640px) { .pf-stats { grid-template-columns: 1fr 1fr; } }
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
   .stat-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .stat-value { font-family: var(--font-display); font-size: 21px; font-weight: 700; line-height: 1; }
@@ -247,6 +248,11 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCkmxrVuAEyRgY
 // Positions manuelles (hors Google Sheet) — prix récupéré via CoinGecko
 const MANUAL = [];
 
+// Plus-values déjà réalisées et réinvesties (argent sorti du portefeuille puis remis).
+// → Soustrait du "cash engagé" réel, ajouté au P&L total.
+// Exemple : j'ai vendu avec +1 500 € de PV et réinvesti cet argent → REALIZED_GAINS = 1500
+const REALIZED_GAINS = 0;
+
 // ════════════════════════════════════════════════════════════════
 
 const COLORS = {
@@ -405,7 +411,7 @@ function buildCharts(positions) {
       ${mkDonut(d1)}
     </div>
     <div class="chart-card">
-      <div class="chart-title">DEFAULT vs PEA</div>
+      <div class="chart-title">CTO vs PEA</div>
       ${mkDonut(d2)}
     </div>
     <div class="chart-card">
@@ -426,31 +432,37 @@ function buildStats(positions) {
     const px=p.currentPrice??p.avgPrice;
     investi+=p.avgPrice*p.qty;
     valeur+=px*p.qty;
-    revDiv+=px*p.qty*p.apyDiv;
-    revStk+=px*p.qty*p.apyStk;
+    revDiv+=p.avgPrice*p.qty*p.apyDiv;  // dividende sur coût (APY fixe/coût)
+    revStk+=px*p.qty*p.apyStk;          // staking sur valeur actuelle (rendement variable)
   });
-  const pnl=valeur-investi, pnlPct=investi>0?(pnl/investi)*100:0;
-  const nbFallback=positions.filter(p=>p.priceFallback).length;
+  // Cash réellement sorti de ta poche = coût de revient − PV déjà réalisées et réinvesties
+  const cashIn = investi - REALIZED_GAINS;
+  const unrealized = valeur - investi;
+  const totalPnl = unrealized + REALIZED_GAINS;
+  const totalPnlPct = cashIn > 0 ? (totalPnl/cashIn)*100 : 0;
+  const nbFallback = positions.filter(p=>p.priceFallback).length;
+  const hasPV = REALIZED_GAINS > 0;
+
   return `<div class="pf-stats">
     <div class="stat">
-      <div class="stat-label">Investi</div>
-      <div class="stat-value">${fmtEur(investi,0)}</div>
-      <div class="stat-sub">prix de revient total</div>
+      <div class="stat-label">${hasPV?'Cash engagé':'Investi'}</div>
+      <div class="stat-value">${fmtEur(hasPV?cashIn:investi,0)}</div>
+      <div class="stat-sub">${hasPV?`coût de revient : ${fmtEur(investi,0)}`:'prix de revient total'}</div>
     </div>
     <div class="stat">
       <div class="stat-label">Valeur actuelle</div>
       <div class="stat-value">${fmtEur(valeur,0)}</div>
-      <div class="stat-sub">${nbFallback>0?`<span style="color:#f59e0b">${nbFallback} en cours de sync</span>`:'tous au cours live'}</div>
+      <div class="stat-sub">${nbFallback>0?`<span style="color:#f59e0b">${nbFallback} prix en attente</span>`:'tous au cours live'}</div>
     </div>
     <div class="stat">
-      <div class="stat-label">P&amp;L</div>
-      <div class="stat-value ${pnlClass(pnl)}">${sign(pnl)}${fmtEur(pnl,0)}</div>
-      <div class="stat-sub ${pnlClass(pnlPct)}">${sign(pnlPct)}${pnlPct.toFixed(2)} %</div>
+      <div class="stat-label">P&amp;L${hasPV?' total':''}</div>
+      <div class="stat-value ${pnlClass(totalPnl)}">${sign(totalPnl)}${fmtEur(totalPnl,0)}</div>
+      <div class="stat-sub ${pnlClass(totalPnlPct)}">${sign(totalPnlPct)}${totalPnlPct.toFixed(2)} %${hasPV?`<br><span style="font-size:10px;opacity:.7">dont ${fmtEur(REALIZED_GAINS,0)} PV réalisées</span>`:''}</div>
     </div>
     <div class="stat">
       <div class="stat-label">Revenus annuels</div>
       <div class="stat-value c-pos">${fmtEur(revDiv+revStk,0)}</div>
-      <div class="stat-sub">${fmtEur(revDiv,0)} div · ${fmtEur(revStk,0)} staking</div>
+      <div class="stat-sub">${fmtEur(revDiv,0)} div · ${fmtEur(revStk,0)} stk</div>
     </div>
   </div>`;
 }
