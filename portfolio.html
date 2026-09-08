@@ -19,7 +19,7 @@
   .pf-notice code { font-family: monospace; font-size: 12px; background: var(--surface); padding: 2px 6px; border-radius: 4px; color: var(--text); }
   .pf-notice a { color: #f59e0b; text-decoration: underline; }
 
-  .pf-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 32px 0; border-bottom: 1px solid var(--border); }
+  .pf-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 32px 0; border-bottom: 1px solid var(--border); }
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
   .stat-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .stat-value { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1; }
@@ -63,9 +63,8 @@
   .pf-loading { text-align: center; padding: 80px 0; color: var(--muted); font-size: 14px; }
   .pf-error { color: #ef4444; font-size: 13px; padding: 32px 0; }
 
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     .pf-stats { grid-template-columns: 1fr 1fr; }
-    .pf-stats .stat:last-child { grid-column: span 2; }
     .pf-viz { flex-direction: column; align-items: flex-start; gap: 24px; }
   }
 </style>
@@ -94,18 +93,12 @@
 
 <script src="assets/haito.js"></script>
 <script>
-// ══════════════════════════════════════════════════
-//  CONFIGURATION
-// ══════════════════════════════════════════════════
-const SHEET_ID = 'VOTRE_SHEET_ID_ICI';
-// Structure attendue du Google Sheet (ligne 1 = en-têtes, ignorée) :
-//   A: Ticker       — CoinGecko ID pour crypto (ex: bitcoin, ethereum)
-//                     Yahoo Finance symbol pour ETF/action (ex: EWLD.PA, AAPL)
-//   B: Type         — crypto | etf | action | autre
-//   C: Nom          — nom affiché (ex: Bitcoin, MSCI World)
-//   D: Quantité     — nombre d'unités
-//   E: Prix moyen   — prix d'achat moyen en EUR
-// ══════════════════════════════════════════════════
+// ── Sheet ID ──────────────────────────────────────────────────────────────────
+const SHEET_ID = '15-JS3dla66BugDswbxu7yPFfD6ho2XfdjKYPyN9ZcM8';
+// Colonnes du sheet (ligne 1 = en-têtes) :
+// A:Compte B:Classe C:Nom D:Symbole E:Quantité F:PrixMoyen
+// G:PrixActuel(GOOGLEFINANCE — peut échouer → fallback sur F)
+// L:APY_dividende  N:APY_staking  (indices 11 et 13)
 
 const COLORS = { crypto:'#f59e0b', etf:'#0ea5e9', action:'#22c55e', autre:'#a78bfa' };
 const LABELS = { crypto:'Crypto', etf:'ETF', action:'Action', autre:'Autre' };
@@ -121,73 +114,71 @@ function fmtNum(n, dec=4) {
 function sign(n) { return n >= 0 ? '+' : ''; }
 function pnlClass(n) { return n > 0 ? 'c-pos' : n < 0 ? 'c-neg' : 'c-neu'; }
 
+function toNum(s) {
+  if (s == null) return NaN;
+  return parseFloat(String(s).replace(/\s/g,'').replace(',','.'));
+}
+
+function mapType(classe) {
+  const c = (classe||'').toLowerCase().trim();
+  if (c === 'crypto') return 'crypto';
+  if (c === 'action') return 'action';
+  if (c === 'etf')    return 'etf';
+  return 'autre';
+}
+
+function parseCSVLine(line) {
+  const cols = [];
+  let cur = '', inq = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inq && line[i+1]==='"') { cur+='"'; i++; } else inq=!inq; continue; }
+    if (c === ',' && !inq) { cols.push(cur.trim()); cur=''; continue; }
+    cur += c;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
 function parseCSV(text) {
   const lines = text.replace(/\r/g,'').trim().split('\n');
-  return lines.slice(1).map(line => {
-    const cols = [];
-    let cur = '', inq = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inq = !inq; continue; }
-      if (c === ',' && !inq) { cols.push(cur.trim()); cur = ''; continue; }
-      cur += c;
-    }
-    cols.push(cur.trim());
-    const qty = parseFloat(cols[3]);
-    const avg = parseFloat(cols[4]);
-    if (!cols[0] || isNaN(qty) || qty <= 0) return null;
+  let fallbackCount = 0;
+  const positions = lines.slice(1).map(line => {
+    const c = parseCSVLine(line);
+    const qty = toNum(c[4]);
+    const avg = toNum(c[5]);
+    if (!c[2] || isNaN(qty) || qty <= 0) return null;
+
+    // Column G = prix actuel via GOOGLEFINANCE. Errors export as empty or "#..."
+    const raw = (c[6] || '').trim();
+    const isError = !raw || raw.startsWith('#') || raw === 'Erreur';
+    const sheetPx = isError ? NaN : toNum(raw);
+    if (isError) fallbackCount++;
+
     return {
-      ticker: cols[0].trim(),
-      type: (cols[1]||'autre').toLowerCase().trim(),
-      nom: cols[2]||cols[0],
+      compte:  (c[0]||'DEFAULT').trim(),
+      type:    mapType(c[1]),
+      nom:     (c[2]||'').trim(),
+      ticker:  (c[3]||'').trim(),
       qty,
-      avgPrice: isNaN(avg) ? 0 : avg,
-      currentPrice: null,
-      currency: 'EUR',
+      avgPrice:     isNaN(avg) ? 0 : avg,
+      currentPrice: isNaN(sheetPx) ? null : sheetPx,
+      priceFallback: isError,
+      apyDiv:  toNum(c[11]) || 0,   // col L
+      apyStk:  toNum(c[13]) || 0,   // col N
     };
   }).filter(Boolean);
+  positions._fallbackCount = fallbackCount;
+  return positions;
 }
 
-async function fetchCryptoPrices(positions) {
-  const cryptos = positions.filter(p => p.type === 'crypto');
-  if (!cryptos.length) return;
-  try {
-    const ids = cryptos.map(p => p.ticker).join(',');
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!res.ok) return;
-    const data = await res.json();
-    cryptos.forEach(p => { if (data[p.ticker]) p.currentPrice = data[p.ticker].eur; });
-  } catch(e) { console.warn('CoinGecko:', e.message); }
-}
-
-async function fetchStockPrices(positions) {
-  const others = positions.filter(p => p.type !== 'crypto');
-  if (!others.length) return;
-  try {
-    const symbols = others.map(p => p.ticker).join(',');
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,currency`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-    if (!res.ok) return;
-    const data = await res.json();
-    const quotes = (data.quoteResponse?.result) || [];
-    others.forEach(p => {
-      const q = quotes.find(q => q.symbol === p.ticker);
-      if (q) { p.currentPrice = q.regularMarketPrice; p.currency = q.currency || 'EUR'; }
-    });
-  } catch(e) { console.warn('Yahoo Finance:', e.message); }
-}
-
+// ── Donut chart ───────────────────────────────────────────────────────────────
 function buildDonut(positions) {
-  const total = positions.reduce((s, p) => {
+  const total = positions.reduce((s,p) => {
     const v = (p.currentPrice ?? p.avgPrice) * p.qty;
     return s + (isNaN(v) ? 0 : v);
   }, 0);
-
-  if (!total) return '<div class="pf-viz"><div style="color:var(--muted);font-size:13px">Aucune donnée disponible.</div></div>';
+  if (!total) return '';
 
   const groups = {};
   positions.forEach(p => {
@@ -196,21 +187,15 @@ function buildDonut(positions) {
     groups[p.type] += isNaN(v) ? 0 : v;
   });
 
-  const r = 54, cx = 72, cy = 72, sw = 18;
-  const circ = 2 * Math.PI * r;
-  const gap = 2;
-  const entries = Object.entries(groups).sort((a,b) => b[1]-a[1]);
-  let accum = 0;
-  let circles = '';
-  let legendRows = '';
-
+  const r=54, cx=72, cy=72, sw=18, circ=2*Math.PI*r, gap=2;
+  const entries = Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+  let accum=0, circles='', legendRows='';
   entries.forEach(([type, val]) => {
-    const pct = val / total;
-    const segLen = Math.max(0, pct * circ - gap);
-    const color = COLORS[type] || COLORS.autre;
-    const dashoffset = circ / 4 - accum;
-    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${segLen} ${circ - segLen}" stroke-dashoffset="${dashoffset}" stroke-linecap="butt"/>`;
-    accum += pct * circ;
+    const pct = val/total;
+    const segLen = Math.max(0, pct*circ-gap);
+    const color = COLORS[type]||COLORS.autre;
+    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${segLen} ${circ-segLen}" stroke-dashoffset="${circ/4-accum}" stroke-linecap="butt"/>`;
+    accum += pct*circ;
     legendRows += `<div class="legend-row">
       <div class="legend-dot" style="background:${color}"></div>
       <div class="legend-name">${LABELS[type]||type}</div>
@@ -230,71 +215,55 @@ function buildDonut(positions) {
   </div>`;
 }
 
+// ── Stats cards ───────────────────────────────────────────────────────────────
 function buildStats(positions) {
-  let investi = 0, valeur = 0;
+  let investi=0, valeur=0, revDiv=0, revStk=0;
   positions.forEach(p => {
+    const px = p.currentPrice ?? p.avgPrice;
     const i = p.avgPrice * p.qty;
-    const v = (p.currentPrice ?? p.avgPrice) * p.qty;
+    const v = px * p.qty;
     if (!isNaN(i)) investi += i;
-    if (!isNaN(v)) valeur += v;
+    if (!isNaN(v)) { valeur += v; revDiv += v * p.apyDiv; revStk += v * p.apyStk; }
   });
   const pnl = valeur - investi;
-  const pnlPct = investi > 0 ? (pnl / investi) * 100 : 0;
+  const pnlPct = investi > 0 ? (pnl/investi)*100 : 0;
+  const revTotal = revDiv + revStk;
   const cls = pnlClass(pnl);
 
   return `<div class="pf-stats">
     <div class="stat">
       <div class="stat-label">Investi</div>
       <div class="stat-value">${fmtEur(investi)}</div>
-      <div class="stat-sub">prix d'achat moyen</div>
+      <div class="stat-sub">prix de revient</div>
     </div>
     <div class="stat">
       <div class="stat-label">Valeur actuelle</div>
       <div class="stat-value">${fmtEur(valeur)}</div>
-      <div class="stat-sub">prix live disponibles</div>
+      <div class="stat-sub">dont ${positions.filter(p=>p.priceFallback).length > 0 ? `<span style="color:#f59e0b">${positions.filter(p=>p.priceFallback).length} au prix de revient</span>` : 'tous au cours live'}</div>
     </div>
     <div class="stat">
-      <div class="stat-label">P&L</div>
+      <div class="stat-label">P&amp;L</div>
       <div class="stat-value ${cls}">${sign(pnl)}${fmtEur(pnl)}</div>
       <div class="stat-sub ${cls}">${sign(pnlPct)}${pnlPct.toFixed(2)} %</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Revenus annuels</div>
+      <div class="stat-value c-pos">${fmtEur(revTotal)}</div>
+      <div class="stat-sub">${fmtEur(revDiv)} div · ${fmtEur(revStk)} staking</div>
     </div>
   </div>`;
 }
 
+// ── Table ─────────────────────────────────────────────────────────────────────
 function buildTable(positions) {
-  const rows = positions.map(p => {
-    const typeKey = p.type in COLORS ? p.type : 'autre';
-    const invested = p.avgPrice * p.qty;
-    const current = p.currentPrice != null ? p.currentPrice * p.qty : null;
-    const pnl = current != null ? current - invested : null;
-    const pnlPct = pnl != null && invested > 0 ? (pnl / invested) * 100 : null;
-    const priceCell = p.currentPrice != null
-      ? `<span class="price-live">${fmtEur(p.currentPrice)}</span>${p.currency !== 'EUR' ? `<br><span style="font-size:10px;color:var(--muted)">${p.currency}</span>` : ''}`
-      : `<span class="price-na">—</span>`;
-    const pnlCell = pnl != null
-      ? `<span class="${pnlClass(pnl)}">${sign(pnl)}${fmtEur(pnl)}</span>`
-      : '—';
-    const pnlPctCell = pnlPct != null
-      ? `<span class="${pnlClass(pnlPct)}">${sign(pnlPct)}${pnlPct.toFixed(1)} %</span>`
-      : '—';
+  const ACCOUNTS = ['DEFAULT','PEA'];
+  let html = '<div class="pf-table-wrap">';
 
-    return `<tr>
-      <td>
-        <div class="asset-name">${p.nom}</div>
-        <div class="asset-ticker">${p.ticker}</div>
-      </td>
-      <td style="text-align:left"><span class="type-badge type-${typeKey}">${LABELS[typeKey]}</span></td>
-      <td>${fmtNum(p.qty)}</td>
-      <td>${fmtEur(p.avgPrice)}</td>
-      <td>${priceCell}</td>
-      <td>${fmtEur(current)}</td>
-      <td>${pnlCell}</td>
-      <td>${pnlPctCell}</td>
-    </tr>`;
-  }).join('');
+  ACCOUNTS.forEach(acc => {
+    const subset = positions.filter(p => p.compte === acc);
+    if (!subset.length) return;
 
-  return `<div class="pf-table-wrap">
-    <p class="pf-section-label">Positions</p>
+    html += `<p class="pf-section-label" style="margin-top:28px">${acc === 'PEA' ? 'PEA — Plan d\'Épargne en Actions' : 'Compte Standard'}</p>
     <table>
       <thead><tr>
         <th>Actif</th>
@@ -303,18 +272,67 @@ function buildTable(positions) {
         <th>Px moyen</th>
         <th>Px actuel</th>
         <th>Valeur</th>
-        <th>P&L €</th>
-        <th>P&L %</th>
+        <th>P&amp;L €</th>
+        <th>P&amp;L %</th>
+        <th>APY</th>
+        <th>Rev./an</th>
       </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
+      <tbody>`;
+
+    subset.forEach(p => {
+      const typeKey = p.type in COLORS ? p.type : 'autre';
+      const px = p.currentPrice ?? p.avgPrice;
+      const invested = p.avgPrice * p.qty;
+      const current  = px * p.qty;
+      const pnl      = current - invested;
+      const pnlPct   = invested > 0 ? (pnl/invested)*100 : 0;
+      const apyTotal = p.apyDiv + p.apyStk;
+      const revAn    = current * apyTotal;
+
+      const pxCell = p.currentPrice != null
+        ? `<span class="price-live">${fmtEur(p.currentPrice)}</span>`
+        : `<span class="price-na" title="Prix de revient utilisé (GOOGLEFINANCE indisponible)">${fmtEur(p.avgPrice)} ≈</span>`;
+
+      const apyParts = [];
+      if (p.apyDiv > 0) apyParts.push(`<span style="color:#22c55e">${(p.apyDiv*100).toFixed(2)}% div</span>`);
+      if (p.apyStk > 0) apyParts.push(`<span style="color:#f59e0b">${(p.apyStk*100).toFixed(2)}% stk</span>`);
+
+      html += `<tr>
+        <td>
+          <div class="asset-name">${p.nom}</div>
+          <div class="asset-ticker">${p.ticker}</div>
+        </td>
+        <td style="text-align:left"><span class="type-badge type-${typeKey}">${LABELS[typeKey]}</span></td>
+        <td>${fmtNum(p.qty)}</td>
+        <td>${fmtEur(p.avgPrice)}</td>
+        <td>${pxCell}</td>
+        <td>${fmtEur(current)}</td>
+        <td><span class="${pnlClass(pnl)}">${sign(pnl)}${fmtEur(pnl)}</span></td>
+        <td><span class="${pnlClass(pnlPct)}">${sign(pnlPct)}${pnlPct.toFixed(1)} %</span></td>
+        <td style="font-size:11px;line-height:1.6">${apyParts.join('<br>') || '<span style="color:var(--muted)">—</span>'}</td>
+        <td>${apyTotal > 0 ? `<span class="c-pos">${fmtEur(revAn)}</span>` : '—'}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+  });
+
+  html += '</div>';
+  return html;
 }
 
+// ── Render ────────────────────────────────────────────────────────────────────
 function render(positions) {
-  const updated = new Date().toLocaleString('fr-FR', { dateStyle:'short', timeStyle:'short' });
+  const updated = new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+  const nb = positions.filter(p=>p.priceFallback).length;
+  const notice = nb > 0
+    ? `<div class="pf-notice" style="margin-bottom:0;margin-top:0;padding:10px 16px">
+        ⚠ ${nb} actif${nb>1?'s':''} en cours de mise à jour dans Google Finance — prix de revient utilisé comme approximation.
+       </div>`
+    : '';
   document.getElementById('pf-root').innerHTML =
     buildStats(positions) +
+    notice +
     buildDonut(positions) +
     buildTable(positions) +
     `<div class="pf-footer">
@@ -323,39 +341,24 @@ function render(positions) {
     </div>`;
 }
 
+// ── Load ──────────────────────────────────────────────────────────────────────
 async function loadPortfolio() {
   const root = document.getElementById('pf-root');
-
-  if (SHEET_ID === 'VOTRE_SHEET_ID_ICI') {
-    root.innerHTML = `<div class="pf-notice">
-      <strong>Configuration requise</strong><br>
-      Remplace <code>VOTRE_SHEET_ID_ICI</code> dans le code par l'ID de ton Google Sheet.<br>
-      L'ID se trouve dans l'URL : <code>docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</code><br>
-      Le Sheet doit être publié : <em>Fichier → Partager → Publier sur le web → Feuille entière → CSV → Publier</em><br><br>
-      Colonnes attendues (ligne 1 = en-têtes, peu importe le texte) :<br>
-      A: Ticker · B: Type (crypto/etf/action) · C: Nom · D: Quantité · E: Prix moyen EUR
-    </div>`;
-    return;
-  }
-
   root.innerHTML = '<div class="pf-loading">Chargement du portefeuille…</div>';
-
-  let positions;
   try {
-    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-    const res = await fetch(sheetUrl, { signal: AbortSignal.timeout(10000) });
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const csv = await res.text();
-    positions = parseCSV(csv);
-    if (!positions.length) throw new Error('Aucune position trouvée dans le Sheet.');
+    const positions = parseCSV(csv);
+    if (!positions.length) throw new Error('Aucune position trouvée.');
+    render(positions);
   } catch(e) {
-    root.innerHTML = `<div class="pf-error">Erreur de chargement du Sheet : ${e.message}<br><small>Vérifie que le Sheet est bien publié sur le web.</small></div>`;
-    return;
+    root.innerHTML = `<div class="pf-error">
+      Impossible de charger le portefeuille : ${e.message}<br>
+      <small>Vérifie que le Google Sheet est partagé en lecture (ou publié sur le web).</small>
+    </div>`;
   }
-
-  root.innerHTML = '<div class="pf-loading">Récupération des prix…</div>';
-  await Promise.all([fetchCryptoPrices(positions), fetchStockPrices(positions)]);
-  render(positions);
 }
 
 loadPortfolio();
