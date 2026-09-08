@@ -157,7 +157,7 @@
       <div class="form-row">
         <label>Compte</label>
         <select id="f-compte">
-          <option value="DEFAULT">DEFAULT</option>
+          <option value="DEFAULT">CTO (Compte-Titres Ordinaire)</option>
           <option value="PEA">PEA</option>
         </select>
       </div>
@@ -259,8 +259,8 @@ const MANUAL = [
 
 const COLORS = {
   crypto: '#f59e0b', action: '#22c55e', etf: '#0ea5e9', autre: '#a78bfa',
-  DEFAULT: '#a78bfa', PEA: '#0ea5e9',
-  'Crypto': '#f59e0b', 'Actions DEFAULT': '#22c55e', 'Actions PEA': '#0ea5e9',
+  DEFAULT: '#a78bfa', CTO: '#a78bfa', PEA: '#0ea5e9',
+  'Crypto': '#f59e0b', 'Actions CTO': '#22c55e', 'Actions PEA': '#0ea5e9',
 };
 const LABELS = { crypto:'Crypto', action:'Action', etf:'ETF', autre:'Autre' };
 
@@ -315,6 +315,7 @@ function parseCSV(text) {
       priceFallback: isErr,
       apyDiv: toNum(c[11])||0,
       apyStk: toNum(c[13])||0,
+      notes:        (c[15]||'').trim(),
       manual: false,
     };
   }).filter(Boolean);
@@ -367,18 +368,18 @@ function mkDonut(entries) {
 function buildCharts(positions) {
   const valOf = p => (p.currentPrice??p.avgPrice)*p.qty;
 
-  // Donut 1 — par type (Crypto / Actions DEFAULT / Actions PEA)
+  // Donut 1 — par type (Crypto / Actions CTO / Actions PEA)
   const byType = {
-    'Crypto':          positions.filter(p=>p.type==='crypto').reduce((s,p)=>s+valOf(p),0),
-    'Actions DEFAULT': positions.filter(p=>p.type!=='crypto'&&p.compte==='DEFAULT').reduce((s,p)=>s+valOf(p),0),
-    'Actions PEA':     positions.filter(p=>p.compte==='PEA').reduce((s,p)=>s+valOf(p),0),
+    'Crypto':      positions.filter(p=>p.type==='crypto').reduce((s,p)=>s+valOf(p),0),
+    'Actions CTO': positions.filter(p=>p.type!=='crypto'&&p.compte==='DEFAULT').reduce((s,p)=>s+valOf(p),0),
+    'Actions PEA': positions.filter(p=>p.compte==='PEA').reduce((s,p)=>s+valOf(p),0),
   };
   const d1 = Object.entries(byType).map(([label,value])=>({label,value,color:COLORS[label]||'#888'}));
 
-  // Donut 2 — par compte (DEFAULT total vs PEA total)
+  // Donut 2 — par compte (CTO total vs PEA total)
   const byCompte = {
-    'DEFAULT': positions.filter(p=>p.compte==='DEFAULT').reduce((s,p)=>s+valOf(p),0),
-    'PEA':     positions.filter(p=>p.compte==='PEA').reduce((s,p)=>s+valOf(p),0),
+    'CTO': positions.filter(p=>p.compte==='DEFAULT').reduce((s,p)=>s+valOf(p),0),
+    'PEA': positions.filter(p=>p.compte==='PEA').reduce((s,p)=>s+valOf(p),0),
   };
   const d2 = Object.entries(byCompte).map(([label,value])=>({label,value,color:COLORS[label]||'#888'}));
 
@@ -491,7 +492,7 @@ function buildTable(subset) {
       return `<tr>
         <td>
           <div class="asset-name">${p.nom}${p.manual?'<span class="manual-badge">MANUEL</span>':''}</div>
-          <div class="asset-ticker">${p.ticker}</div>
+          <div class="asset-ticker">${p.ticker}${p.notes?`<span style="color:var(--muted);font-weight:400;margin-left:6px">${p.notes}</span>`:''}</div>
         </td>
         <td>${fmtNum(p.qty)}</td>
         <td>${fmtEur(p.avgPrice)}</td>
@@ -539,7 +540,7 @@ function render(positions) {
     notice +
     buildCharts(positions) +
     buildSection(positions, 'Crypto', p => p.type==='crypto') +
-    buildSection(positions, 'Actions — Compte Standard', p => p.type!=='crypto' && p.compte==='DEFAULT') +
+    buildSection(positions, 'Actions — CTO', p => p.type!=='crypto' && p.compte==='DEFAULT') +
     buildSection(positions, 'Actions — PEA', p => p.compte==='PEA') +
     `<div class="pf-footer">
       <span>Mis à jour le ${updated}</span>
