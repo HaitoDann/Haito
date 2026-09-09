@@ -67,7 +67,7 @@
   .bar-meta  { font-size: 11px; color: var(--muted); width: 90px; text-align: right; flex-shrink: 0; }
 
   /* ── Filter tabs ── */
-  .pf-filter-bar { display: flex; gap: 6px; padding: 20px 0 4px; flex-wrap: wrap; }
+  .pf-filter-bar { display: flex; align-items: center; gap: 6px; padding: 20px 0 4px; flex-wrap: wrap; }
   .filter-tab {
     background: none; border: 1px solid var(--border); border-radius: 20px;
     padding: 5px 14px; font-size: 11px; font-weight: 500; color: var(--muted);
@@ -154,6 +154,44 @@
     .chart-inner { flex-direction: row; }
   }
   @media (max-width: 480px) { .bar-label { width: 100px; } }
+
+  /* ── Chart interactions : bar ── */
+  .bar-row[data-ticker] { cursor: pointer; transition: opacity .18s; }
+  .bar-row.bar-dimmed   { opacity: 0.2; }
+  .bar-row.bar-focused .bar-track  { height: 9px; }
+  .bar-row.bar-focused .bar-label  { color: var(--text); font-weight: 600; white-space: normal; overflow: visible; text-overflow: unset; }
+  .bar-row.bar-focused .bar-meta   { color: var(--text); font-weight: 600; }
+  .bar-track { transition: height .15s; }
+
+  /* ── Chart interactions : donut ── */
+  .donut-arc  { cursor: pointer; transition: opacity .2s, stroke-width .2s; }
+  .legend-row { cursor: pointer; transition: opacity .18s; }
+  .donut-center-label, .donut-center-pct { pointer-events: none; transition: opacity .15s; }
+
+  /* ── Tooltip flottant ── */
+  .pf-tooltip {
+    position: fixed; z-index: 150; pointer-events: none;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.30);
+    min-width: 170px; max-width: 230px; font-size: 12px;
+  }
+
+  /* ── Table row hover avec couleur de marque ── */
+  td:first-child { border-left: 3px solid transparent; transition: border-color .15s; }
+  tbody tr:hover { background: color-mix(in srgb, var(--row-color, var(--border)) 5%, transparent); }
+  tbody tr:hover td:first-child { border-left-color: var(--row-color, var(--dim)); }
+  tbody tr:hover .asset-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--row-color) 28%, transparent); }
+
+  /* ── Barre de recherche ── */
+  .pf-search {
+    margin-left: auto;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
+    padding: 5px 14px; font-size: 11px; color: var(--text); font-family: var(--font);
+    transition: border-color .15s, width .2s; outline: none; width: 150px;
+  }
+  .pf-search:focus { border-color: #a78bfa; width: 200px; }
+  .pf-search::placeholder { color: var(--muted); }
 
   /* ── Modal ── */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -284,6 +322,7 @@
 </div>
 
 <div class="pf-toast" id="pfToast"></div>
+<div class="pf-tooltip" id="pf-tooltip" hidden></div>
 
 <script src="assets/haito.js"></script>
 <script>
@@ -346,6 +385,7 @@ let _allPositions = [];
 let _sortCol = 'val';
 let _sortDir = -1;         // -1 = DESC, 1 = ASC
 let _filterActive = 'all'; // 'all' | 'crypto' | 'cto' | 'pea'
+let _searchQuery = '';
 let _firstLoad = true;
 const _prevPrices = new Map();
 
@@ -456,6 +496,12 @@ function pnlOf(p)  { return valOf(p) - p.avgPrice*p.qty; }
 function pnlPOf(p) { const i=p.avgPrice*p.qty; return i>0?pnlOf(p)/i:0; }
 function revOf(p)  { return valOf(p)*(p.apyDiv+p.apyStk); }
 
+function filterBySearch(arr) {
+  if (!_searchQuery) return arr;
+  const q = _searchQuery;
+  return arr.filter(p => p.nom.toLowerCase().includes(q) || p.ticker.toLowerCase().includes(q));
+}
+
 function sortPositions(arr) {
   return [...arr].sort((a,b) => {
     let va, vb;
@@ -475,28 +521,32 @@ function sortPositions(arr) {
 //  BUILDERS
 // ════════════════════════════════════════════════════════════════
 
-function mkDonut(entries) {
+function mkDonut(entries, donutId='d') {
   const total = entries.reduce((s,e)=>s+e.value,0);
   if (!total) return '';
   const r=46,cx=55,cy=55,sw=16,circ=2*Math.PI*r,gap=2;
   let accum=0, circles='', rows='';
-  entries.filter(e=>e.value>0).sort((a,b)=>b.value-a.value).forEach(e=>{
+  entries.filter(e=>e.value>0).sort((a,b)=>b.value-a.value).forEach((e,idx)=>{
     const pct=e.value/total;
     const segLen=Math.max(0,pct*circ-gap);
-    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${sw}" stroke-dasharray="${segLen} ${circ-segLen}" stroke-dashoffset="${circ/4-accum}" stroke-linecap="butt"/>`;
+    const pctStr=Math.round(pct*100)+'%';
+    const safeLabel=e.label.replace(/"/g,'&quot;');
+    circles+=`<circle class="donut-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${sw}" stroke-dasharray="${segLen} ${circ-segLen}" stroke-dashoffset="${circ/4-accum}" stroke-linecap="butt" data-idx="${idx}" data-label="${safeLabel}" data-pct="${pctStr}" data-color="${e.color}"/>`;
     accum+=pct*circ;
-    rows+=`<div class="legend-row">
+    rows+=`<div class="legend-row" data-idx="${idx}">
       <div class="legend-dot" style="background:${e.color}"></div>
       <div class="legend-name">${e.label}</div>
       <div class="legend-pct">${Math.round(pct*100)} %</div>
     </div>`;
   });
-  return `<div class="chart-inner">
-    <svg class="donut-svg" viewBox="0 0 110 110">
+  return `<div class="chart-inner" data-donut="${donutId}">
+    <svg class="donut-svg" viewBox="0 0 110 110" data-donut="${donutId}">
       <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${sw}"/>
       ${circles}
+      <text class="donut-center-label" x="${cx}" y="${cy-7}" text-anchor="middle" font-size="8" fill="var(--muted)" opacity="0"></text>
+      <text class="donut-center-pct"   x="${cx}" y="${cy+8}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" opacity="0"></text>
     </svg>
-    <div class="donut-legend">${rows}</div>
+    <div class="donut-legend" data-donut="${donutId}">${rows}</div>
   </div>`;
 }
 
@@ -523,19 +573,28 @@ function buildCharts(positions) {
   // Bar chart — part de chaque actif (couleur de marque)
   const total = positions.reduce((s,p)=>s+valOf(p),0);
   const sorted = [...positions].map(p=>({...p,_val:valOf(p)})).filter(p=>p._val>0).sort((a,b)=>b._val-a._val);
-  const bars = sorted.map(p=>`<div class="bar-row">
-    <div class="bar-label" title="${p.nom}">
-      <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${assetColor(p)};margin-right:6px;vertical-align:middle;flex-shrink:0"></span>${p.nom}
-    </div>
-    <div class="bar-track"><div class="bar-fill" style="width:${((p._val/total)*100).toFixed(2)}%;background:${assetColor(p)}"></div></div>
-    <div class="bar-meta">${fmtEur(p._val,0)} · ${Math.round(p._val/total*100)} %</div>
-  </div>`).join('');
+  const bars = sorted.map(p=>{
+    const pnl = p._val - p.avgPrice*p.qty;
+    const pnlCls = pnl>0?'c-pos':pnl<0?'c-neg':'c-neu';
+    const safeNom = p.nom.replace(/"/g,'&quot;');
+    const color = assetColor(p);
+    return `<div class="bar-row"
+      data-ticker="${p.ticker}" data-nom="${safeNom}" data-color="${color}"
+      data-val="${fmtEur(p._val,0)}" data-pct="${Math.round(p._val/total*100)} %"
+      data-pnl="${sign(pnl)}${fmtEur(pnl,0)}" data-pnlcls="${pnlCls}">
+      <div class="bar-label" title="${p.nom}">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle;flex-shrink:0"></span>${p.nom}
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${((p._val/total)*100).toFixed(2)}%;background:${color}"></div></div>
+      <div class="bar-meta">${fmtEur(p._val,0)} · ${Math.round(p._val/total*100)} %</div>
+    </div>`;
+  }).join('');
 
   return `
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">Répartition par type</div>${mkDonut(d1)}</div>
-    <div class="chart-card"><div class="chart-title">CTO vs PEA</div>${mkDonut(d2)}</div>
-    <div class="chart-card"><div class="chart-title">Crypto — par actif</div>${mkDonut(d3)}</div>
+    <div class="chart-card"><div class="chart-title">Répartition par type</div>${mkDonut(d1,'d1')}</div>
+    <div class="chart-card"><div class="chart-title">CTO vs PEA</div>${mkDonut(d2,'d2')}</div>
+    <div class="chart-card"><div class="chart-title">Crypto — par actif</div>${mkDonut(d3,'d3')}</div>
   </div>
   <div class="bar-section">
     <div class="bar-section-title">Part de chaque actif dans le capital total</div>
@@ -631,7 +690,7 @@ function buildTable(subset) {
       if (p.apyDiv>0) apyParts.push(`<span class="c-pos">${(p.apyDiv*100).toFixed(2)}% div</span>`);
       if (p.apyStk>0) apyParts.push(`<span style="color:#f59e0b">${(p.apyStk*100).toFixed(2)}% stk</span>`);
 
-      return `<tr style="--row-i:${i}" data-ticker="${p.ticker}">
+      return `<tr style="--row-i:${i};--row-color:${color}" data-ticker="${p.ticker}">
         <td>
           <div class="asset-row">
             <span class="asset-dot" style="background:${color}"></span>
@@ -656,7 +715,7 @@ function buildTable(subset) {
 }
 
 function buildSection(positions, label, filterFn) {
-  const subset = sortPositions(positions.filter(filterFn));
+  const subset = sortPositions(filterBySearch(positions.filter(filterFn)));
   const total  = subset.reduce((s,p)=>s+valOf(p),0);
   const inv    = subset.reduce((s,p)=>s+p.avgPrice*p.qty,0);
   const pnl    = total-inv;
@@ -677,7 +736,8 @@ function buildFilterBar() {
     {f:'cto',   label:'Actions CTO'},
     {f:'pea',   label:'Actions PEA'},
   ];
-  return tabs.map(t=>`<button class="filter-tab${_filterActive===t.f?' active':''}" data-filter="${t.f}">${t.label}</button>`).join('');
+  return tabs.map(t=>`<button class="filter-tab${_filterActive===t.f?' active':''}" data-filter="${t.f}">${t.label}</button>`).join('') +
+    `<input class="pf-search" id="pf-search-input" type="text" placeholder="🔍 Rechercher…" value="${_searchQuery.replace(/"/g,'&quot;')}" autocomplete="off">`;
 }
 
 function buildSections(positions) {
@@ -727,6 +787,9 @@ function render(positions) {
       <button class="pf-refresh" onclick="loadPortfolio()">↻ Actualiser</button>
     </div>`;
 
+  // Interactions graphiques (à câbler après chaque render)
+  initChartInteractions();
+
   // Animation des compteurs au premier chargement
   if (_firstLoad) {
     _firstLoad = false;
@@ -743,10 +806,128 @@ function render(positions) {
   });
 }
 
-// Re-rend uniquement les sections (filtre/tri)
+// Re-rend uniquement les sections (filtre/tri/recherche)
 function renderSectionsOnly() {
   const sec = document.getElementById('pf-sections');
   if (sec) sec.innerHTML = buildSections(_allPositions);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  INTERACTIONS GRAPHIQUES
+// ════════════════════════════════════════════════════════════════
+
+function initDonutHovers() {
+  document.querySelectorAll('.donut-svg').forEach(svg => {
+    const arcs = [...svg.querySelectorAll('.donut-arc')];
+    if (!arcs.length) return;
+    const donutId = svg.dataset.donut;
+    const legend  = document.querySelector(`.donut-legend[data-donut="${donutId}"]`);
+    const legRows = legend ? [...legend.querySelectorAll('.legend-row')] : [];
+    const clabel  = svg.querySelector('.donut-center-label');
+    const cpct    = svg.querySelector('.donut-center-pct');
+    let curIdx = -1;
+
+    function apply(idx) {
+      if (idx === curIdx) return;
+      curIdx = idx;
+      arcs.forEach((a, i) => {
+        if (idx === -1) {
+          a.style.opacity = ''; a.style.strokeWidth = ''; a.style.transform = '';
+        } else {
+          const active = i === idx;
+          a.style.opacity     = active ? '1' : '0.15';
+          a.style.strokeWidth = active ? '20' : '16';
+          a.style.transformOrigin = '55px 55px';
+          a.style.transform   = active ? 'scale(1.05)' : 'scale(1)';
+        }
+      });
+      legRows.forEach((r, i) => { r.style.opacity = idx === -1 ? '' : (i === idx ? '1' : '0.28'); });
+      if (clabel && cpct) {
+        if (idx === -1) {
+          clabel.setAttribute('opacity','0'); cpct.setAttribute('opacity','0');
+        } else {
+          let lbl = arcs[idx]?.dataset.label || '';
+          if (lbl.length > 11) lbl = lbl.slice(0,9) + '…';
+          clabel.textContent = lbl;
+          cpct.textContent   = arcs[idx]?.dataset.pct || '';
+          cpct.setAttribute('fill', arcs[idx]?.dataset.color || 'var(--text)');
+          clabel.setAttribute('opacity','1'); cpct.setAttribute('opacity','1');
+        }
+      }
+    }
+
+    // Utilise le conteneur pour éviter le flickering arc↔légende
+    const container = svg.closest('.chart-inner');
+    if (container) {
+      container.addEventListener('mouseover', e => {
+        const t = e.target.closest('.donut-arc, .legend-row[data-idx]');
+        apply(t ? parseInt(t.dataset.idx) : -1);
+      });
+      container.addEventListener('mouseleave', () => apply(-1));
+    }
+  });
+}
+
+function initBarHovers() {
+  const barSection = document.querySelector('.bar-section');
+  if (!barSection) return;
+  const tooltip = document.getElementById('pf-tooltip');
+  let hoveredRow = null;
+
+  function clearHover() {
+    barSection.querySelectorAll('.bar-row[data-ticker]').forEach(r => r.classList.remove('bar-dimmed','bar-focused'));
+    hoveredRow = null;
+    if (tooltip) tooltip.hidden = true;
+  }
+
+  function applyHover(row) {
+    if (row === hoveredRow) return;
+    hoveredRow = row;
+    const all = barSection.querySelectorAll('.bar-row[data-ticker]');
+    all.forEach(r => {
+      r.classList.toggle('bar-dimmed', !!row && r !== row);
+      r.classList.toggle('bar-focused', r === row);
+    });
+    if (!row || !tooltip) { if (tooltip) tooltip.hidden = true; return; }
+    tooltip.innerHTML = `
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${row.dataset.color};flex-shrink:0;display:inline-block"></span>
+        <strong style="font-size:12.5px;color:var(--text)">${row.dataset.nom}</strong>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-family:monospace;margin-bottom:8px">${row.dataset.ticker}</div>
+      <div style="display:flex;justify-content:space-between;gap:12px">
+        <span style="color:var(--muted)">Valeur</span>
+        <span style="font-weight:700;color:var(--text)">${row.dataset.val}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-top:4px">
+        <span style="color:var(--muted)">Part</span>
+        <span style="font-weight:600;color:var(--text)">${row.dataset.pct}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+        <span style="color:var(--muted)">P&amp;L</span>
+        <span style="font-weight:600" class="${row.dataset.pnlcls}">${row.dataset.pnl}</span>
+      </div>`;
+    tooltip.hidden = false;
+  }
+
+  barSection.addEventListener('mouseover', e => {
+    const row = e.target.closest('.bar-row[data-ticker]');
+    applyHover(row || null);
+  });
+  barSection.addEventListener('mousemove', e => {
+    if (tooltip && !tooltip.hidden) {
+      const x = Math.min(e.clientX + 18, window.innerWidth - 250);
+      const y = Math.min(e.clientY - 10,  window.innerHeight - 130);
+      tooltip.style.left = x + 'px';
+      tooltip.style.top  = y + 'px';
+    }
+  });
+  barSection.addEventListener('mouseleave', clearHover);
+}
+
+function initChartInteractions() {
+  initDonutHovers();
+  initBarHovers();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -771,6 +952,13 @@ document.addEventListener('click', e => {
   }
 });
 
+document.addEventListener('input', e => {
+  if (e.target.id === 'pf-search-input') {
+    _searchQuery = e.target.value.trim().toLowerCase();
+    renderSectionsOnly();
+  }
+});
+
 // ════════════════════════════════════════════════════════════════
 //  MODAL
 // ════════════════════════════════════════════════════════════════
@@ -784,7 +972,12 @@ function closeAddModal() {
   document.getElementById('addModal').hidden = true;
   document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if (e.key==='Escape') closeAddModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAddModal();
+  if (e.key === 'r' && !e.metaKey && !e.ctrlKey && !e.shiftKey && document.activeElement?.tagName !== 'INPUT') {
+    loadPortfolio();
+  }
+});
 document.getElementById('addModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeAddModal(); });
 
 function showToast(msg, type='ok') {
