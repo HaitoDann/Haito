@@ -166,7 +166,7 @@
   /* ── Chart interactions : donut ── */
   .donut-arc  { cursor: pointer; transition: opacity .2s, stroke-width .2s; }
   .legend-row { cursor: pointer; transition: opacity .18s; }
-  .donut-center-label, .donut-center-pct { pointer-events: none; transition: opacity .15s; }
+  .donut-center-label, .donut-center-pct { opacity: 0; pointer-events: none; transition: opacity .18s; }
 
   /* ── Tooltip flottant ── */
   .pf-tooltip {
@@ -844,22 +844,24 @@ function initDonutHovers() {
       legRows.forEach((r, i) => { r.style.opacity = idx === -1 ? '' : (i === idx ? '1' : '0.28'); });
       if (clabel && cpct) {
         if (idx === -1) {
-          clabel.setAttribute('opacity','0'); cpct.setAttribute('opacity','0');
+          clabel.style.opacity = '0';
+          cpct.style.opacity   = '0';
         } else {
           let lbl = arcs[idx]?.dataset.label || '';
           if (lbl.length > 11) lbl = lbl.slice(0,9) + '…';
-          clabel.textContent = lbl;
-          cpct.textContent   = arcs[idx]?.dataset.pct || '';
-          cpct.setAttribute('fill', arcs[idx]?.dataset.color || 'var(--text)');
-          clabel.setAttribute('opacity','1'); cpct.setAttribute('opacity','1');
+          clabel.textContent  = lbl;
+          cpct.textContent    = arcs[idx]?.dataset.pct || '';
+          cpct.style.fill     = arcs[idx]?.dataset.color || '';
+          clabel.style.opacity = '1';
+          cpct.style.opacity   = '1';
         }
       }
     }
 
-    // Utilise le conteneur pour éviter le flickering arc↔légende
+    // mousemove évite le déclenchement au re-render DOM (curseur stationnaire)
     const container = svg.closest('.chart-inner');
     if (container) {
-      container.addEventListener('mouseover', e => {
+      container.addEventListener('mousemove', e => {
         const t = e.target.closest('.donut-arc, .legend-row[data-idx]');
         apply(t ? parseInt(t.dataset.idx) : -1);
       });
