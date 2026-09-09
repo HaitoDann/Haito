@@ -50,7 +50,7 @@
   .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
   .chart-title { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
   .chart-inner { display: flex; align-items: center; gap: 20px; }
-  .donut-svg   { width: 110px; height: 110px; flex-shrink: 0; }
+  .donut-svg   { width: 110px; height: 110px; flex-shrink: 0; overflow: visible; }
   .donut-legend{ display: flex; flex-direction: column; gap: 9px; flex: 1; min-width: 0; }
   .legend-row  { display: flex; align-items: center; gap: 8px; }
   .legend-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -223,6 +223,34 @@
   .pf-toast.show { opacity: 1; transform: translateY(0); }
   .pf-toast.ok  { background: #22c55e; color: #fff; }
   .pf-toast.err { background: #ef4444; color: #fff; }
+
+  /* ── View navigation ── */
+  .pf-view-nav { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 0; overflow-x: auto; }
+  .view-tab { background: none; border: none; border-bottom: 3px solid transparent; padding: 14px 22px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; font-family: var(--font); transition: color .15s, border-color .15s; margin-bottom: -2px; white-space: nowrap; }
+  .view-tab:hover { color: var(--text); }
+  .view-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; font-weight: 600; }
+
+  /* ── Répartition view ── */
+  .rep-wrap { padding: 28px 0; }
+  .rep-chart-inner { align-items: flex-start !important; gap: 32px !important; }
+  .rep-legend-extra { font-size: 11px; color: var(--muted); min-width: 72px; text-align: right; }
+
+  /* ── Projection view ── */
+  .proj-container { padding: 28px 0; }
+  .proj-inputs { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 760px) { .proj-inputs { grid-template-columns: 1fr 1fr; } }
+  .proj-input-group { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .proj-input-label { display: block; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .proj-input-field { width: 100%; background: none; border: none; font-size: 20px; font-weight: 700; font-family: var(--font-display); color: var(--text); outline: none; padding: 0; }
+  .proj-input-field::-webkit-inner-spin-button, .proj-input-field::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .proj-chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; }
+  .proj-chart-svg { width: 100%; display: block; }
+  .proj-hover-label { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; position: absolute; font-size: 11px; pointer-events: none; min-width: 140px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+  .proj-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 16px; }
+  @media (max-width: 480px) { .proj-summary { grid-template-columns: 1fr; } }
+  .proj-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .proj-stat-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .proj-stat-value { font-size: 20px; font-weight: 700; font-family: var(--font-display); }
 </style>
 </head>
 <body>
@@ -387,6 +415,7 @@ let _sortDir = -1;         // -1 = DESC, 1 = ASC
 let _filterActive = 'all'; // 'all' | 'crypto' | 'cto' | 'pea'
 let _searchQuery = '';
 let _firstLoad = true;
+let _currentView = 'dashboard'; // 'dashboard' | 'portfolio' | 'repartition' | 'projection'
 const _prevPrices = new Map();
 
 // ════════════════════════════════════════════════════════════════
@@ -755,6 +784,189 @@ function buildSections(positions) {
   return buildSection(positions, label, fn);
 }
 
+// ── Donut grand format (répartition globale) ────────────────────
+function mkRepDonut(entries, donutId='rep') {
+  const total = entries.reduce((s,e)=>s+e.value,0);
+  if (!total) return '';
+  const r=80, cx=100, cy=100, sw=20, circ=2*Math.PI*r, gap=1.5;
+  let accum=0, circles='', rows='';
+  entries.filter(e=>e.value>0).forEach((e,idx)=>{
+    const pct=e.value/total;
+    const segLen=Math.max(0,pct*circ-gap);
+    const pctStr=Math.round(pct*100)+'%';
+    const safeLabel=e.label.replace(/"/g,'&quot;');
+    circles+=`<circle class="donut-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${sw}" stroke-dasharray="${segLen} ${circ-segLen}" stroke-dashoffset="${circ/4-accum}" stroke-linecap="butt" data-idx="${idx}" data-label="${safeLabel}" data-pct="${pctStr}" data-color="${e.color}"/>`;
+    accum+=pct*circ;
+    rows+=`<div class="legend-row" data-idx="${idx}" style="padding:5px 0">
+      <div class="legend-dot" style="background:${e.color}"></div>
+      <div class="legend-name">${e.label}${e.ticker?`<span style="font-size:9px;color:var(--muted);font-family:monospace;margin-left:5px">${e.ticker}</span>`:''}</div>
+      <div class="legend-pct">${Math.round(pct*100)} %</div>
+      <div class="rep-legend-extra">${fmtEur(e.value,0)}</div>
+    </div>`;
+  });
+  return `<div class="chart-inner rep-chart-inner" data-donut="${donutId}">
+    <svg class="donut-svg" viewBox="0 0 200 200" data-donut="${donutId}" style="width:180px;height:180px">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${sw}"/>
+      ${circles}
+      <text class="donut-center-label" x="${cx}" y="${cy-12}" text-anchor="middle" font-size="11" fill="var(--muted)" opacity="0"></text>
+      <text class="donut-center-pct"   x="${cx}" y="${cy+14}" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)" opacity="0"></text>
+    </svg>
+    <div class="donut-legend" data-donut="${donutId}" style="max-height:none;overflow-y:auto">${rows}</div>
+  </div>`;
+}
+
+// ── Barre de navigation des vues ────────────────────────────────
+function buildViewNav() {
+  const views = [
+    {id:'dashboard',   label:'Vue d\'ensemble'},
+    {id:'portfolio',   label:'Portefeuille'},
+    {id:'repartition', label:'Répartition'},
+    {id:'projection',  label:'Projection'},
+  ];
+  return `<nav class="pf-view-nav">${views.map(v=>`<button class="view-tab${_currentView===v.id?' active':''}" data-view="${v.id}">${v.label}</button>`).join('')}</nav>`;
+}
+
+function buildCurrentView(positions) {
+  switch (_currentView) {
+    case 'portfolio':   return buildViewPortfolio(positions);
+    case 'repartition': return buildViewRepartition(positions);
+    case 'projection':  return buildViewProjection(positions);
+    default:            return buildViewDashboard(positions);
+  }
+}
+
+function buildViewDashboard(positions) {
+  const nbFallback = positions.filter(p=>p.priceFallback).length;
+  const notice = nbFallback>0
+    ? `<div class="pf-notice">⚠ ${nbFallback} actif${nbFallback>1?'s':''} avec GOOGLEFINANCE indisponible — prix de revient affiché comme approximation (≈).</div>`
+    : '';
+  return `${buildStats(positions)}${notice}${buildCharts(positions)}`;
+}
+
+function buildViewPortfolio(positions) {
+  const nbFallback = positions.filter(p=>p.priceFallback).length;
+  const notice = nbFallback>0
+    ? `<div class="pf-notice">⚠ ${nbFallback} actif${nbFallback>1?'s':''} avec GOOGLEFINANCE indisponible — prix de revient affiché comme approximation (≈).</div>`
+    : '';
+  return `${notice}<div class="pf-filter-bar" id="pf-filter-bar">${buildFilterBar()}</div><div id="pf-sections">${buildSections(positions)}</div>`;
+}
+
+function buildViewRepartition(positions) {
+  const entries = [...positions]
+    .map(p=>({label:p.nom, ticker:p.ticker, value:valOf(p), color:assetColor(p)}))
+    .filter(e=>e.value>0).sort((a,b)=>b.value-a.value);
+  const total = entries.reduce((s,e)=>s+e.value,0);
+  return `<div class="rep-wrap">
+    <div class="chart-title" style="margin-bottom:20px">Répartition globale — tous actifs</div>
+    ${mkRepDonut(entries,'rep')}
+    <div style="margin-top:14px;font-size:12px;color:var(--muted)">Total : <strong style="color:var(--text)">${fmtEur(total,0)}</strong></div>
+  </div>`;
+}
+
+// ── Projection : intérêts composés ──────────────────────────────
+function calcProjection(v0, monthly, rate, years) {
+  const rm = rate/12;
+  return Array.from({length:years+1}, (_,y) => {
+    const t = y*12;
+    const val = rm>0 ? v0*Math.pow(1+rm,t)+monthly*(Math.pow(1+rm,t)-1)/rm : v0+monthly*t;
+    return {y, val, noY: v0+monthly*12*y};
+  });
+}
+
+function buildProjectionChart(v0, monthly, rate, years) {
+  const pts = calcProjection(v0, monthly, rate, years);
+  const maxVal = Math.max(...pts.map(p=>p.val), 1);
+  const W=600, H=260, PL=86, PR=16, PT=16, PB=36;
+  const cW=W-PL-PR, cH=H-PT-PB;
+  const sx=y=>PL+(y/years)*cW, sy=v=>PT+cH-(v/maxVal)*cH;
+
+  let grid='', xlbls='';
+  for (let i=1;i<=4;i++) {
+    const v=maxVal*i/4, gy=sy(v).toFixed(1);
+    grid+=`<line x1="${PL}" y1="${gy}" x2="${W-PR}" y2="${gy}" stroke="var(--border)" stroke-width="1"/>
+<text x="${PL-7}" y="${(parseFloat(gy)+4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${fmtEur(v,0)}</text>`;
+  }
+  const step=years<=10?2:years<=20?5:10;
+  for(let y=0;y<=years;y+=step){
+    xlbls+=`<text x="${sx(y).toFixed(1)}" y="${H-PB+13}" text-anchor="middle" font-size="9" fill="var(--muted)">${y}a</text>`;
+  }
+
+  const line1=pts.map(p=>`${sx(p.y).toFixed(1)},${sy(p.val).toFixed(1)}`).join(' ');
+  const line2=pts.map(p=>`${sx(p.y).toFixed(1)},${sy(p.noY).toFixed(1)}`).join(' ');
+  const poly=`${PL},${H-PB} ${line1} ${W-PR},${H-PB}`;
+
+  return `<svg class="proj-chart-svg" viewBox="0 0 ${W} ${H}" id="proj-svg">
+  <defs>
+    <linearGradient id="proj-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  ${grid}
+  <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H-PB}" stroke="var(--border)" stroke-width="1.5"/>
+  ${xlbls}
+  <polyline fill="none" stroke="var(--dim)" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.4" points="${line2}" stroke-linejoin="round"/>
+  <polygon fill="url(#proj-grad)" stroke="none" points="${poly}"/>
+  <polyline fill="none" stroke="#a78bfa" stroke-width="2.5" points="${line1}" stroke-linejoin="round"/>
+  <line id="proj-vline" x1="0" y1="${PT}" x2="0" y2="${H-PB}" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4 3" opacity="0.6" visibility="hidden"/>
+  <circle id="proj-dot" cx="0" cy="0" r="5" fill="#a78bfa" stroke="var(--bg)" stroke-width="2.5" visibility="hidden"/>
+  <rect id="proj-overlay" x="${PL}" y="${PT}" width="${cW}" height="${cH}" fill="transparent" cursor="crosshair"
+    data-pl="${PL}" data-pt="${PT}" data-cw="${cW}" data-ch="${cH}" data-w="${W}" data-h="${H}" data-years="${years}" data-maxval="${maxVal.toFixed(2)}"/>
+</svg>
+<div class="proj-hover-label" id="proj-hlabel" hidden></div>`;
+}
+
+function buildProjectionSummary(v0, monthly, rate, years) {
+  const rm=rate/12, t=years*12;
+  const finalVal=rm>0 ? v0*Math.pow(1+rm,t)+monthly*(Math.pow(1+rm,t)-1)/rm : v0+monthly*t;
+  const totalIn=v0+monthly*12*years;
+  const gains=finalVal-totalIn;
+  return `
+    <div class="proj-stat">
+      <div class="proj-stat-label">Valeur finale (an ${years})</div>
+      <div class="proj-stat-value c-pos">${fmtEur(finalVal,0)}</div>
+    </div>
+    <div class="proj-stat">
+      <div class="proj-stat-label">Total injecté</div>
+      <div class="proj-stat-value">${fmtEur(totalIn,0)}</div>
+    </div>
+    <div class="proj-stat">
+      <div class="proj-stat-label">Intérêts générés</div>
+      <div class="proj-stat-value c-pos">+${fmtEur(Math.max(0,gains),0)}</div>
+    </div>`;
+}
+
+function buildViewProjection(positions) {
+  const v0=Math.round(positions.reduce((s,p)=>s+valOf(p),0));
+  return `<div class="proj-container">
+    <div class="proj-inputs">
+      <div class="proj-input-group">
+        <label class="proj-input-label">Capital initial (€)</label>
+        <input class="proj-input-field" id="proj-v0" type="number" min="0" step="100" value="${v0}">
+      </div>
+      <div class="proj-input-group">
+        <label class="proj-input-label">Injection / mois (€)</label>
+        <input class="proj-input-field" id="proj-monthly" type="number" min="0" step="50" value="500">
+      </div>
+      <div class="proj-input-group">
+        <label class="proj-input-label">Rendement annuel (%)</label>
+        <input class="proj-input-field" id="proj-rate" type="number" min="0" step="0.5" value="8">
+      </div>
+      <div class="proj-input-group">
+        <label class="proj-input-label">Horizon (années)</label>
+        <input class="proj-input-field" id="proj-years" type="number" min="1" max="50" step="1" value="20">
+      </div>
+    </div>
+    <div class="proj-chart-wrap" id="proj-chart-wrap">
+      ${buildProjectionChart(v0, 500, 0.08, 20)}
+    </div>
+    <div class="proj-summary" id="proj-summary">
+      ${buildProjectionSummary(v0, 500, 0.08, 20)}
+    </div>
+  </div>`;
+}
+
 // ════════════════════════════════════════════════════════════════
 //  RENDER
 // ════════════════════════════════════════════════════════════════
@@ -762,7 +974,6 @@ function buildSections(positions) {
 function render(positions) {
   _allPositions = positions;
 
-  // Détecter les prix qui ont changé depuis le dernier chargement
   positions.forEach(p => {
     p._priceChanged = p.currentPrice != null &&
       _prevPrices.has(p.ticker) &&
@@ -770,27 +981,19 @@ function render(positions) {
     if (p.currentPrice != null) _prevPrices.set(p.ticker, p.currentPrice);
   });
 
-  const nbFallback = positions.filter(p=>p.priceFallback).length;
-  const notice = nbFallback>0
-    ? `<div class="pf-notice">⚠ ${nbFallback} actif${nbFallback>1?'s':''} avec GOOGLEFINANCE indisponible — prix de revient affiché comme approximation (≈).</div>`
-    : '';
   const updated = new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
 
   document.getElementById('pf-root').innerHTML = `
-    ${buildStats(positions)}
-    ${notice}
-    ${buildCharts(positions)}
-    <div class="pf-filter-bar" id="pf-filter-bar">${buildFilterBar()}</div>
-    <div id="pf-sections">${buildSections(positions)}</div>
+    ${buildViewNav()}
+    <div id="pf-view-content">${buildCurrentView(positions)}</div>
     <div class="pf-footer">
       <span><span class="live-dot"></span>Mis à jour le ${updated}</span>
       <button class="pf-refresh" onclick="loadPortfolio()">↻ Actualiser</button>
     </div>`;
 
-  // Interactions graphiques (à câbler après chaque render)
   initChartInteractions();
+  if (_currentView === 'projection') initProjectionChart();
 
-  // Animation des compteurs au premier chargement
   if (_firstLoad) {
     _firstLoad = false;
     document.querySelectorAll('[data-count-target]').forEach(el => {
@@ -799,7 +1002,6 @@ function render(positions) {
     });
   }
 
-  // Pulse sur les prix qui ont changé
   positions.filter(p=>p._priceChanged).forEach(p => {
     const el = document.querySelector(`[data-ticker="${p.ticker}"] .price-live`);
     if (el) { el.classList.remove('price-pulse'); void el.offsetWidth; el.classList.add('price-pulse'); }
@@ -832,13 +1034,11 @@ function initDonutHovers() {
       curIdx = idx;
       arcs.forEach((a, i) => {
         if (idx === -1) {
-          a.style.opacity = ''; a.style.strokeWidth = ''; a.style.transform = '';
+          a.style.opacity = ''; a.style.strokeWidth = '';
         } else {
           const active = i === idx;
           a.style.opacity     = active ? '1' : '0.15';
           a.style.strokeWidth = active ? '20' : '16';
-          a.style.transformOrigin = '55px 55px';
-          a.style.transform   = active ? 'scale(1.05)' : 'scale(1)';
         }
       });
       legRows.forEach((r, i) => { r.style.opacity = idx === -1 ? '' : (i === idx ? '1' : '0.28'); });
@@ -932,11 +1132,101 @@ function initChartInteractions() {
   initBarHovers();
 }
 
+function switchView(view) {
+  _currentView = view;
+  document.querySelectorAll('.view-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+  const content = document.getElementById('pf-view-content');
+  if (content) {
+    content.innerHTML = buildCurrentView(_allPositions);
+    initChartInteractions();
+    if (view === 'projection') initProjectionChart();
+  }
+}
+
+function initProjectionChart() {
+  const overlay = document.getElementById('proj-overlay');
+  const svg     = document.getElementById('proj-svg');
+  const vline   = document.getElementById('proj-vline');
+  const dot     = document.getElementById('proj-dot');
+  const hlabel  = document.getElementById('proj-hlabel');
+  if (!overlay || !svg || !vline || !dot) return;
+
+  const getParams = () => ({
+    v0:      parseFloat(document.getElementById('proj-v0')?.value)||0,
+    monthly: parseFloat(document.getElementById('proj-monthly')?.value)||0,
+    rate:   (parseFloat(document.getElementById('proj-rate')?.value)||0)/100,
+    years:   Math.max(1,Math.min(50,parseInt(document.getElementById('proj-years')?.value)||20)),
+  });
+
+  overlay.addEventListener('mousemove', e => {
+    const {v0,monthly,rate,years} = getParams();
+    const pts = calcProjection(v0, monthly, rate, years);
+    const maxVal = Math.max(...pts.map(p=>p.val),1);
+
+    const PL=parseFloat(overlay.dataset.pl), PT=parseFloat(overlay.dataset.pt);
+    const cW=parseFloat(overlay.dataset.cw), cH=parseFloat(overlay.dataset.ch);
+    const VW=parseFloat(overlay.dataset.w),  VH=parseFloat(overlay.dataset.h);
+
+    const svgRect = svg.getBoundingClientRect();
+    const vbX = (e.clientX - svgRect.left) / svgRect.width * VW;
+    const ny = Math.max(0, Math.min(years, Math.round((vbX - PL) / cW * years)));
+    const pt = pts[ny];
+    const px = (PL + (ny/years)*cW).toFixed(1);
+    const py = (PT + cH - (pt.val/maxVal)*cH).toFixed(1);
+
+    vline.setAttribute('x1',px); vline.setAttribute('x2',px);
+    vline.setAttribute('visibility','visible');
+    dot.setAttribute('cx',px); dot.setAttribute('cy',py);
+    dot.setAttribute('visibility','visible');
+
+    if (hlabel) {
+      const gains = pt.val - pt.noY;
+      hlabel.innerHTML = `
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">Année ${pt.y}</div>
+        <div style="display:flex;justify-content:space-between;gap:14px"><span style="color:#a78bfa">Valeur</span><span style="font-weight:700;color:#a78bfa">${fmtEur(pt.val,0)}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:14px;margin-top:3px"><span style="color:var(--muted)">Injecté</span><span style="color:var(--dim)">${fmtEur(pt.noY,0)}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:14px;margin-top:3px"><span style="color:var(--muted)">Intérêts</span><span style="color:#22c55e">+${fmtEur(Math.max(0,gains),0)}</span></div>`;
+      const wrap = document.getElementById('proj-chart-wrap');
+      if (wrap) {
+        const wr = wrap.getBoundingClientRect();
+        let lx = e.clientX - wr.left + 16;
+        if (lx + 160 > wr.width) lx = e.clientX - wr.left - 176;
+        hlabel.style.left = Math.max(0,lx) + 'px';
+        hlabel.style.top  = Math.max(10, e.clientY - wr.top - 20) + 'px';
+        hlabel.hidden = false;
+      }
+    }
+  });
+
+  overlay.addEventListener('mouseleave', () => {
+    vline.setAttribute('visibility','hidden');
+    dot.setAttribute('visibility','hidden');
+    if (hlabel) hlabel.hidden = true;
+  });
+}
+
+function updateProjectionChart() {
+  const v0      = parseFloat(document.getElementById('proj-v0')?.value)||0;
+  const monthly = parseFloat(document.getElementById('proj-monthly')?.value)||0;
+  const rate    = (parseFloat(document.getElementById('proj-rate')?.value)||0)/100;
+  const years   = Math.max(1,Math.min(50,parseInt(document.getElementById('proj-years')?.value)||20));
+  const wrap    = document.getElementById('proj-chart-wrap');
+  const summary = document.getElementById('proj-summary');
+  if (wrap)    wrap.innerHTML    = buildProjectionChart(v0, monthly, rate, years);
+  if (summary) summary.innerHTML = buildProjectionSummary(v0, monthly, rate, years);
+  initProjectionChart();
+}
+
 // ════════════════════════════════════════════════════════════════
 //  ÉVÉNEMENTS — sort & filtre (délégation)
 // ════════════════════════════════════════════════════════════════
 
 document.addEventListener('click', e => {
+  const vt = e.target.closest('.view-tab');
+  if (vt && vt.dataset.view) { switchView(vt.dataset.view); return; }
+
   const th  = e.target.closest('th[data-sort-col]');
   if (th) {
     const col = th.dataset.sortCol;
@@ -954,10 +1244,15 @@ document.addEventListener('click', e => {
   }
 });
 
+const _PROJ_IDS = ['proj-v0','proj-monthly','proj-rate','proj-years'];
 document.addEventListener('input', e => {
   if (e.target.id === 'pf-search-input') {
     _searchQuery = e.target.value.trim().toLowerCase();
     renderSectionsOnly();
+    return;
+  }
+  if (_PROJ_IDS.includes(e.target.id)) {
+    updateProjectionChart();
   }
 });
 
