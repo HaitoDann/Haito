@@ -251,6 +251,18 @@
   .proj-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
   .proj-stat-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
   .proj-stat-value { font-size: 20px; font-weight: 700; font-family: var(--font-display); }
+
+  /* ── Edit / Delete ── */
+  .btn-danger { background: none; border: 1px solid #ef4444; border-radius: 8px; padding: 11px 20px; font-size: 13px; color: #ef4444; cursor: pointer; font-family: var(--font); transition: all .15s; }
+  .btn-danger:hover { background: #ef4444; color: #fff; }
+  .btn-danger:disabled { opacity: .5; cursor: not-allowed; }
+  .row-edit-btn { background: none; border: none; cursor: pointer; color: var(--muted); padding: 5px 8px; border-radius: 6px; font-size: 13px; transition: all .12s; opacity: 0; line-height: 1; }
+  tbody tr:hover .row-edit-btn { opacity: 1; }
+  .row-edit-btn:hover { color: var(--text); background: var(--border); }
+  .form-row input[readonly] { opacity: .45; cursor: not-allowed; }
+  .form-row select:disabled { opacity: .45; cursor: not-allowed; }
+  .modal-del-zone { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .modal-del-zone small { font-size: 11px; color: var(--muted); flex: 1; }
 </style>
 </head>
 <body>
@@ -279,8 +291,8 @@
 
 <div class="modal-backdrop" id="addModal" hidden>
   <div class="modal">
-    <div class="modal-title">Ajouter une position</div>
-    <div class="modal-sub">La position sera ajoutée directement dans ton Google Sheet.</div>
+    <div class="modal-title" id="modal-title">Ajouter une position</div>
+    <div class="modal-sub" id="modal-sub">La position sera ajoutée directement dans ton Google Sheet.</div>
     <div class="form-grid2">
       <div class="form-row">
         <label>Compte</label>
@@ -305,9 +317,9 @@
     <div class="form-row">
       <label>Ticker / ISIN</label>
       <input type="text" id="f-ticker" placeholder="ex : BTC · NYSE:O · FR0000120578 · NVDA">
-      <div class="form-hint">Utilisé pour la formule de prix dans le Sheet.</div>
+      <div class="form-hint" id="f-ticker-hint">Utilisé pour la formule de prix dans le Sheet.</div>
     </div>
-    <div class="form-row">
+    <div class="form-row" id="f-pricetype-row">
       <label>Type de prix (formule Google Sheets)</label>
       <select id="f-priceType">
         <option value="gf_eur">GOOGLEFINANCE — Action en EUR (Euronext…)</option>
@@ -345,6 +357,10 @@
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddModal()">Annuler</button>
       <button class="btn-primary" id="f-submit" onclick="submitPosition()">Ajouter dans le Sheet</button>
+    </div>
+    <div class="modal-del-zone" id="modal-del-zone" hidden>
+      <small>Zone de danger — cette action est irréversible.</small>
+      <button class="btn-danger" id="f-delete" onclick="deletePosition()">Supprimer la position</button>
     </div>
   </div>
 </div>
@@ -416,6 +432,7 @@ let _filterActive = 'all'; // 'all' | 'crypto' | 'cto' | 'pea'
 let _searchQuery = '';
 let _firstLoad = true;
 let _currentView = 'dashboard'; // 'dashboard' | 'portfolio' | 'repartition' | 'projection'
+let _editingTicker = null;      // null = mode ajout, string = mode édition
 const _prevPrices = new Map();
 
 // ════════════════════════════════════════════════════════════════
@@ -695,6 +712,7 @@ function buildTable(subset) {
       <th class="${sc('pnlpct')}" data-sort-col="pnlpct">P&amp;L %${sortIcon('pnlpct')}</th>
       <th class="${sc('apy')}" data-sort-col="apy">APY${sortIcon('apy')}</th>
       <th class="${sc('rev')}" data-sort-col="rev">Rev./an${sortIcon('rev')}</th>
+      <th></th>
     </tr></thead>
     <tbody>
     ${subset.map((p,i)=>{
@@ -737,6 +755,7 @@ function buildTable(subset) {
         <td><span class="${pnlClass(pnlPct)}">${sign(pnlPct)}${pnlPct.toFixed(1)} %</span></td>
         <td class="apy-cell">${apyParts.join('<br>')||'<span style="color:var(--muted)">—</span>'}</td>
         <td>${apyT>0?`<span class="c-pos">${fmtEur(val*apyT)}</span>`:'—'}</td>
+        <td><button class="row-edit-btn" data-edit-ticker="${p.ticker}" title="Modifier">✏</button></td>
       </tr>`;
     }).join('')}
     </tbody>
@@ -1224,6 +1243,9 @@ function updateProjectionChart() {
 // ════════════════════════════════════════════════════════════════
 
 document.addEventListener('click', e => {
+  const editBtn = e.target.closest('[data-edit-ticker]');
+  if (editBtn) { openEditModal(editBtn.dataset.editTicker); return; }
+
   const vt = e.target.closest('.view-tab');
   if (vt && vt.dataset.view) { switchView(vt.dataset.view); return; }
 
@@ -1260,14 +1282,73 @@ document.addEventListener('input', e => {
 //  MODAL
 // ════════════════════════════════════════════════════════════════
 
+function _setModalMode(editing) {
+  _editingTicker = editing ? editing : null;
+  const isEdit = !!editing;
+  document.getElementById('modal-title').textContent = isEdit ? `Modifier — ${editing}` : 'Ajouter une position';
+  document.getElementById('modal-sub').textContent   = isEdit
+    ? 'Modifie les champs puis enregistre. Le ticker et la formule de prix ne changent pas.'
+    : 'La position sera ajoutée directement dans ton Google Sheet.';
+  document.getElementById('f-submit').textContent = isEdit ? 'Enregistrer' : 'Ajouter dans le Sheet';
+  document.getElementById('f-pricetype-row').hidden = isEdit;
+  document.getElementById('modal-del-zone').hidden  = !isEdit;
+  document.getElementById('f-ticker').readOnly = isEdit;
+  document.getElementById('f-compte').disabled = isEdit;
+  document.getElementById('f-classe').disabled = isEdit;
+}
+
 function openAddModal() {
   if (!APPS_SCRIPT_URL) { showToast('Configure d\'abord APPS_SCRIPT_URL.','err'); return; }
+  _setModalMode(null);
+  ['f-nom','f-ticker','f-notes'].forEach(id => document.getElementById(id).value = '');
+  ['f-qty','f-avg','f-apyDiv','f-apyStk'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-compte').value = 'DEFAULT';
+  document.getElementById('f-classe').value = 'Crypto';
   document.getElementById('addModal').hidden = false;
   document.body.style.overflow = 'hidden';
 }
+
+function openEditModal(ticker) {
+  if (!APPS_SCRIPT_URL) { showToast('Configure d\'abord APPS_SCRIPT_URL.','err'); return; }
+  const p = _allPositions.find(pos => pos.ticker === ticker);
+  if (!p) return;
+  _setModalMode(ticker);
+  document.getElementById('modal-title').textContent = `Modifier — ${p.nom}`;
+  document.getElementById('f-compte').value   = p.compte;
+  document.getElementById('f-classe').value   = p.type === 'crypto' ? 'Crypto' : p.type === 'etf' ? 'ETF' : 'Action';
+  document.getElementById('f-nom').value      = p.nom;
+  document.getElementById('f-ticker').value   = p.ticker;
+  document.getElementById('f-qty').value      = p.qty;
+  document.getElementById('f-avg').value      = p.avgPrice;
+  document.getElementById('f-apyDiv').value   = p.apyDiv > 0 ? (p.apyDiv*100).toFixed(4) : '';
+  document.getElementById('f-apyStk').value   = p.apyStk > 0 ? (p.apyStk*100).toFixed(4) : '';
+  document.getElementById('f-notes').value    = p.notes || '';
+  document.getElementById('addModal').hidden  = false;
+  document.body.style.overflow = 'hidden';
+}
+
 function closeAddModal() {
   document.getElementById('addModal').hidden = true;
   document.body.style.overflow = '';
+}
+
+async function deletePosition() {
+  if (!_editingTicker) return;
+  const ticker = _editingTicker;
+  const p = _allPositions.find(pos => pos.ticker === ticker);
+  const name = p?.nom || ticker;
+  if (!confirm(`Supprimer définitivement "${name}" du portfolio ?\n\nCette action est irréversible.`)) return;
+  const btn = document.getElementById('f-delete');
+  btn.disabled = true; btn.textContent = 'Suppression…';
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?${new URLSearchParams({action:'delete',ticker})}`,{signal:AbortSignal.timeout(12000)});
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.err || 'Erreur Apps Script');
+    showToast(`${name} supprimé du portfolio.`, 'ok');
+    closeAddModal();
+    setTimeout(loadPortfolio, 1800);
+  } catch(e) { showToast('Erreur : '+e.message,'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Supprimer la position'; }
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeAddModal();
@@ -1287,28 +1368,40 @@ function showToast(msg, type='ok') {
 async function submitPosition() {
   const get = id => document.getElementById(id).value.trim();
   const nom=get('f-nom'), ticker=get('f-ticker'), qty=parseFloat(get('f-qty')), avg=parseFloat(get('f-avg'));
-  if (!nom)          { showToast('Renseigne le nom.','err'); return; }
-  if (!ticker)       { showToast('Renseigne le ticker / ISIN.','err'); return; }
-  if (!qty||qty<=0)  { showToast('Quantité invalide.','err'); return; }
+  if (!nom)              { showToast('Renseigne le nom.','err'); return; }
+  if (!ticker)           { showToast('Renseigne le ticker / ISIN.','err'); return; }
+  if (!qty||qty<=0)      { showToast('Quantité invalide.','err'); return; }
   if (isNaN(avg)||avg<0) { showToast('Prix moyen invalide.','err'); return; }
-  const btn=document.getElementById('f-submit');
-  btn.disabled=true; btn.textContent='Envoi…';
-  const params=new URLSearchParams({
-    compte:get('f-compte'), classe:get('f-classe'), nom, ticker,
-    priceType:get('f-priceType'), qty:qty.toString(), avgPrice:avg.toString(),
-    apyDiv:((parseFloat(get('f-apyDiv'))||0)/100).toString(),
-    apyStk:((parseFloat(get('f-apyStk'))||0)/100).toString(),
-    notes:get('f-notes'),
+
+  const isEdit = !!_editingTicker;
+  const btn = document.getElementById('f-submit');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+
+  const params = new URLSearchParams({
+    action:    isEdit ? 'update' : 'add',
+    compte:    get('f-compte'),
+    classe:    get('f-classe'),
+    nom, ticker,
+    priceType: get('f-priceType'),
+    qty:       qty.toString(),
+    avgPrice:  avg.toString(),
+    apyDiv:    ((parseFloat(get('f-apyDiv'))||0)/100).toString(),
+    apyStk:    ((parseFloat(get('f-apyStk'))||0)/100).toString(),
+    notes:     get('f-notes'),
   });
+
   try {
-    const res=await fetch(`${APPS_SCRIPT_URL}?${params}`,{signal:AbortSignal.timeout(12000)});
-    const json=await res.json();
+    const res  = await fetch(`${APPS_SCRIPT_URL}?${params}`,{signal:AbortSignal.timeout(12000)});
+    const json = await res.json();
     if (!json.ok) throw new Error(json.err||'Erreur Apps Script');
-    showToast('Position ajoutée ! Rechargement dans 3s…','ok');
+    showToast(isEdit ? 'Position mise à jour ! Rechargement…' : 'Position ajoutée ! Rechargement…','ok');
     closeAddModal();
-    setTimeout(loadPortfolio,3000);
+    setTimeout(loadPortfolio, 2000);
   } catch(e) { showToast('Erreur : '+e.message,'err'); }
-  finally { btn.disabled=false; btn.textContent='Ajouter dans le Sheet'; }
+  finally {
+    btn.disabled = false;
+    btn.textContent = isEdit ? 'Enregistrer' : 'Ajouter dans le Sheet';
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
